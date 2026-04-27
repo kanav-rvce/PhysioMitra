@@ -12,7 +12,7 @@ const team = [
   },
   {
     name: 'Aarav Jagga',
-    degree: "RVCE '28 CI",
+    degree: "RVCE '28 | CI",
     avatar: 'AJ',
     photo: '/aarav.jpg',
     color: '#10B981',

@@ -8,6 +8,7 @@ interface EmergencyMapProps {
   allHospitals: Hospital[];
   route: Array<{ lat: number; lng: number }> | null;
   isActive: boolean;
+  focusTarget?: { lat: number; lng: number } | null;
 }
 
 // Inject CSS pulse keyframes once
@@ -96,6 +97,7 @@ const EmergencyMap = ({
   allHospitals,
   route,
   isActive,
+  focusTarget,
 }: EmergencyMapProps) => {
   const mapRef = useRef<HTMLDivElement>(null);
   // eslint-disable-next-line @typescript-eslint/no-explicit-any
@@ -296,6 +298,12 @@ const EmergencyMap = ({
       }
     });
   }, [ambulanceLocation]);
+
+  // Pan map to focusTarget when "View on Map" is clicked
+  useEffect(() => {
+    if (!mapInstanceRef.current || !focusTarget) return;
+    mapInstanceRef.current.setView([focusTarget.lat, focusTarget.lng], 15, { animate: true });
+  }, [focusTarget]);
 
   // Remove ambulance marker when emergency ends
   useEffect(() => {
