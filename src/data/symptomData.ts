@@ -962,6 +962,232 @@ export const selfCareTips: Record<string, SelfCareTip[]> = {
     { icon: '💧', tip: 'Stay hydrated.' },
     { icon: '⏸️', tip: 'Take breaks when speaking.' },
   ],
+
+  // ── Neurological / Mental ──────────────────────────────────────────────────
+  brain_fog: [
+    { icon: '😴', tip: 'Prioritise 7–9 hours of quality sleep each night.' },
+    { icon: '💧', tip: 'Drink at least 2 litres of water daily — dehydration worsens fog.' },
+    { icon: '🚶', tip: 'Take a 10-minute walk; light movement boosts blood flow to the brain.' },
+  ],
+
+  // ── Cardiovascular ────────────────────────────────────────────────────────
+  chest_pain: [
+    { icon: '🛑', tip: 'Stop all physical activity immediately and rest.' },
+    { icon: '🧘', tip: 'Sit upright and breathe slowly and deeply.' },
+    { icon: '📞', tip: 'If pain persists more than 5 minutes, call emergency services.' },
+  ],
+  severe_chest_pain: [
+    { icon: '🚨', tip: 'Call emergency services (112/911) immediately — do not wait.' },
+    { icon: '🛑', tip: 'Stop all activity and sit or lie down in a comfortable position.' },
+    { icon: '💊', tip: 'If prescribed, take aspirin (325 mg) while waiting for help.' },
+  ],
+
+  // ── Respiratory ───────────────────────────────────────────────────────────
+  dry_throat: [
+    { icon: '💧', tip: 'Sip warm water or herbal tea frequently.' },
+    { icon: '🍯', tip: 'Mix honey in warm water — it soothes throat irritation.' },
+    { icon: '💨', tip: 'Use a humidifier to add moisture to dry indoor air.' },
+  ],
+  cough: [
+    { icon: '🍯', tip: 'Take a teaspoon of honey to soothe the throat.' },
+    { icon: '💧', tip: 'Stay well hydrated to thin mucus secretions.' },
+    { icon: '🌿', tip: 'Inhale steam with a few drops of eucalyptus oil for relief.' },
+  ],
+  shortness_of_breath: [
+    { icon: '🧘', tip: 'Sit upright and practice pursed-lip breathing: inhale 2s, exhale 4s.' },
+    { icon: '🌬️', tip: 'Open a window or step outside for fresh air.' },
+    { icon: '⏸️', tip: 'Stop any exertion immediately and rest until breathing normalises.' },
+  ],
+
+  // ── Digestive ─────────────────────────────────────────────────────────────
+  vomiting: [
+    { icon: '💧', tip: 'Sip small amounts of clear fluids (water, ORS) to prevent dehydration.' },
+    { icon: '🍚', tip: 'Once settled, eat bland foods: rice, toast, banana.' },
+    { icon: '⏸️', tip: 'Rest and avoid solid food for 1–2 hours after vomiting.' },
+  ],
+  indigestion: [
+    { icon: '🚶', tip: 'Take a gentle 10-minute walk after meals to aid digestion.' },
+    { icon: '🍵', tip: 'Drink ginger or peppermint tea to ease discomfort.' },
+    { icon: '🪑', tip: 'Avoid lying down for at least 2 hours after eating.' },
+  ],
+  abdominal_pain: [
+    { icon: '🔥', tip: 'Apply a warm compress or heating pad to the abdomen.' },
+    { icon: '🧘', tip: 'Lie on your side with knees drawn up to relieve cramping.' },
+    { icon: '🍵', tip: 'Sip warm chamomile or peppermint tea for muscle relaxation.' },
+  ],
+  bloating: [
+    { icon: '🚶', tip: 'Walk for 15 minutes after meals to stimulate digestion.' },
+    { icon: '🍵', tip: 'Drink fennel or peppermint tea to reduce gas.' },
+    { icon: '⏸️', tip: 'Avoid carbonated drinks and gas-producing foods temporarily.' },
+  ],
+  diarrhea: [
+    { icon: '💧', tip: 'Drink ORS (oral rehydration solution) to replace lost fluids and salts.' },
+    { icon: '🍌', tip: 'Follow the BRAT diet: Banana, Rice, Applesauce, Toast.' },
+    { icon: '⏸️', tip: 'Avoid dairy, fatty foods, and caffeine until symptoms resolve.' },
+  ],
+  constipation: [
+    { icon: '💧', tip: 'Drink 8–10 glasses of water daily to soften stools.' },
+    { icon: '🥦', tip: 'Increase fibre intake: fruits, vegetables, whole grains.' },
+    { icon: '🚶', tip: 'Walk or exercise for 20–30 minutes to stimulate bowel movement.' },
+  ],
+  heartburn: [
+    { icon: '🪑', tip: 'Sit upright for at least 2 hours after eating.' },
+    { icon: '🥛', tip: 'Drink a small glass of cold milk for temporary relief.' },
+    { icon: '⏸️', tip: 'Avoid spicy, fatty, and acidic foods until symptoms ease.' },
+  ],
+  loss_of_appetite: [
+    { icon: '🍽️', tip: 'Eat small, frequent meals rather than large ones.' },
+    { icon: '🍋', tip: 'Try light, easy-to-digest foods like soups, fruits, and yoghurt.' },
+    { icon: '🚶', tip: 'Light exercise before meals can stimulate appetite.' },
+  ],
+  nausea: [
+    { icon: '🫚', tip: 'Sniff or chew fresh ginger — it is a proven anti-nausea remedy.' },
+    { icon: '💧', tip: 'Sip cold water or clear fluids slowly.' },
+    { icon: '🌬️', tip: 'Get fresh air and breathe slowly through your nose.' },
+  ],
+
+  // ── Skin / Hair ───────────────────────────────────────────────────────────
+  acne: [
+    { icon: '🧼', tip: 'Wash your face twice daily with a gentle, non-comedogenic cleanser.' },
+    { icon: '🙅', tip: 'Avoid touching or picking at spots to prevent scarring.' },
+    { icon: '💧', tip: 'Stay hydrated and reduce sugar and dairy intake temporarily.' },
+  ],
+  dry_skin: [
+    { icon: '🧴', tip: 'Apply a fragrance-free moisturiser immediately after bathing.' },
+    { icon: '💧', tip: 'Drink plenty of water and use a humidifier indoors.' },
+    { icon: '🚿', tip: 'Use lukewarm (not hot) water when bathing to prevent moisture loss.' },
+  ],
+  hair_loss: [
+    { icon: '🥗', tip: 'Ensure adequate protein, iron, and zinc in your diet.' },
+    { icon: '💆', tip: 'Gently massage the scalp for 5 minutes daily to improve circulation.' },
+    { icon: '⏸️', tip: 'Avoid tight hairstyles and excessive heat styling.' },
+  ],
+  skin_rash: [
+    { icon: '❄️', tip: 'Apply a cool, damp cloth to the rash to reduce itching.' },
+    { icon: '🧴', tip: 'Use a fragrance-free, hypoallergenic moisturiser.' },
+    { icon: '🙅', tip: 'Avoid scratching — it worsens irritation and risks infection.' },
+  ],
+
+  // ── Sleep / Lifestyle ─────────────────────────────────────────────────────
+  daytime_sleepiness: [
+    { icon: '😴', tip: 'Aim for a consistent sleep schedule — same bedtime and wake time daily.' },
+    { icon: '☀️', tip: 'Get bright natural light exposure in the morning to reset your body clock.' },
+    { icon: '⏸️', tip: 'Limit caffeine after 2 pm and avoid screens 1 hour before bed.' },
+  ],
+  snoring: [
+    { icon: '🛏️', tip: 'Sleep on your side rather than your back to reduce airway obstruction.' },
+    { icon: '💧', tip: 'Stay well hydrated — dehydration thickens nasal secretions.' },
+    { icon: '🏃', tip: 'Maintain a healthy weight; excess weight around the neck worsens snoring.' },
+  ],
+  night_sweats: [
+    { icon: '🌡️', tip: 'Keep your bedroom cool (16–18°C) and use breathable cotton bedding.' },
+    { icon: '🚿', tip: 'Take a cool shower before bed to lower core body temperature.' },
+    { icon: '⏸️', tip: 'Avoid alcohol, spicy food, and caffeine in the evening.' },
+  ],
+  insomnia: [
+    { icon: '📵', tip: 'Avoid screens (phone, TV) for at least 1 hour before bed.' },
+    { icon: '🧘', tip: 'Try 4-7-8 breathing: inhale 4s, hold 7s, exhale 8s.' },
+    { icon: '🛏️', tip: 'Use your bed only for sleep — avoid working or watching TV in bed.' },
+  ],
+  fatigue: [
+    { icon: '😴', tip: 'Prioritise 7–9 hours of uninterrupted sleep.' },
+    { icon: '🥗', tip: 'Eat balanced meals with iron-rich foods: spinach, lentils, red meat.' },
+    { icon: '🚶', tip: 'Light exercise like a 20-minute walk can paradoxically boost energy.' },
+  ],
+
+  // ── Hormonal / General ────────────────────────────────────────────────────
+  irregular_periods: [
+    { icon: '🧘', tip: 'Manage stress through yoga, meditation, or deep breathing.' },
+    { icon: '🥗', tip: 'Maintain a balanced diet and healthy body weight.' },
+    { icon: '⏸️', tip: 'Avoid excessive exercise which can disrupt hormonal balance.' },
+  ],
+  missed_period: [
+    { icon: '🧘', tip: 'Reduce stress — high cortisol can suppress ovulation.' },
+    { icon: '🥗', tip: 'Ensure adequate caloric intake; under-eating disrupts cycles.' },
+    { icon: '📋', tip: 'Track your cycle and note any other symptoms for your doctor.' },
+  ],
+  hot_flashes: [
+    { icon: '🌡️', tip: 'Dress in light, breathable layers you can easily remove.' },
+    { icon: '💧', tip: 'Carry cold water and sip frequently throughout the day.' },
+    { icon: '⏸️', tip: 'Avoid triggers: spicy food, caffeine, alcohol, and hot beverages.' },
+  ],
+  weight_loss: [
+    { icon: '🥗', tip: 'Eat calorie-dense, nutritious foods: nuts, avocado, whole grains.' },
+    { icon: '🍽️', tip: 'Eat 5–6 small meals per day rather than 3 large ones.' },
+    { icon: '📋', tip: 'Keep a food diary and share it with your doctor.' },
+  ],
+  excessive_sweating: [
+    { icon: '🚿', tip: 'Shower regularly and use an antiperspirant (not just deodorant).' },
+    { icon: '👕', tip: 'Wear loose, breathable, moisture-wicking fabrics.' },
+    { icon: '💧', tip: 'Stay hydrated to help regulate body temperature.' },
+  ],
+  frequent_urination: [
+    { icon: '⏸️', tip: 'Reduce caffeine and alcohol — both are bladder irritants.' },
+    { icon: '🧘', tip: 'Practice pelvic floor exercises (Kegels) to improve bladder control.' },
+    { icon: '📋', tip: 'Track fluid intake and urination frequency to share with your doctor.' },
+  ],
+  fever: [
+    { icon: '💧', tip: 'Drink plenty of fluids to prevent dehydration.' },
+    { icon: '🌡️', tip: 'Apply a cool, damp cloth to the forehead and wrists.' },
+    { icon: '🛏️', tip: 'Rest and avoid strenuous activity until fever subsides.' },
+  ],
+  headache: [
+    { icon: '💧', tip: 'Drink a full glass of water — dehydration is a common trigger.' },
+    { icon: '🌑', tip: 'Rest in a quiet, dark room and close your eyes.' },
+    { icon: '❄️', tip: 'Apply a cold or warm compress to the forehead or neck.' },
+  ],
+  dizziness: [
+    { icon: '🪑', tip: 'Sit or lie down immediately to prevent falling.' },
+    { icon: '💧', tip: 'Sip water slowly — dizziness is often caused by dehydration.' },
+    { icon: '🚶', tip: 'Move slowly when changing positions (lying → sitting → standing).' },
+  ],
+  swollen_lymph_nodes: [
+    { icon: '🔥', tip: 'Apply a warm compress to the swollen area for comfort.' },
+    { icon: '😴', tip: 'Rest and allow your immune system to fight the underlying cause.' },
+    { icon: '⏸️', tip: 'Avoid pressing or squeezing the nodes.' },
+  ],
+  cold_hands_feet: [
+    { icon: '🧤', tip: 'Wear warm socks and gloves; layer up in cold environments.' },
+    { icon: '🚶', tip: 'Exercise regularly to improve circulation.' },
+    { icon: '⏸️', tip: 'Avoid smoking and caffeine which constrict blood vessels.' },
+  ],
+
+  // ── ENT ───────────────────────────────────────────────────────────────────
+  sinus_pressure: [
+    { icon: '🌿', tip: 'Inhale steam for 10 minutes — add eucalyptus oil for extra relief.' },
+    { icon: '💧', tip: 'Use a saline nasal rinse to clear congestion.' },
+    { icon: '🔥', tip: 'Apply a warm compress over the nose and forehead.' },
+  ],
+  nosebleeds: [
+    { icon: '🤏', tip: 'Pinch the soft part of your nose and lean slightly forward for 10 minutes.' },
+    { icon: '❄️', tip: 'Apply a cold compress to the bridge of the nose.' },
+    { icon: '💧', tip: 'Use a saline nasal spray to keep nasal passages moist.' },
+  ],
+  runny_nose: [
+    { icon: '🌿', tip: 'Inhale steam to loosen congestion.' },
+    { icon: '💧', tip: 'Use a saline nasal spray to flush out irritants.' },
+    { icon: '🍵', tip: 'Drink warm fluids like ginger tea to soothe nasal passages.' },
+  ],
+  ear_pain: [
+    { icon: '🔥', tip: 'Apply a warm compress or heating pad over the ear.' },
+    { icon: '🧘', tip: 'Try the Valsalva manoeuvre: close mouth, pinch nose, gently blow.' },
+    { icon: '⏸️', tip: 'Avoid inserting anything into the ear canal.' },
+  ],
+  sore_throat: [
+    { icon: '🧂', tip: 'Gargle with warm salt water (1/2 tsp salt in 250ml water) every few hours.' },
+    { icon: '🍯', tip: 'Mix honey and lemon in warm water — both have soothing properties.' },
+    { icon: '❄️', tip: 'Suck on ice chips or a cold popsicle to numb the pain.' },
+  ],
+  eye_strain: [
+    { icon: '👁️', tip: 'Follow the 20-20-20 rule: every 20 min, look 20 feet away for 20 seconds.' },
+    { icon: '💧', tip: 'Use lubricating eye drops to relieve dryness.' },
+    { icon: '🌑', tip: 'Reduce screen brightness and enable night mode.' },
+  ],
+  fainting: [
+    { icon: '🛏️', tip: 'Lie flat and elevate your legs above heart level to restore blood flow.' },
+    { icon: '💧', tip: 'Sip water slowly once conscious — dehydration is a common cause.' },
+    { icon: '🌬️', tip: 'Get fresh air and loosen any tight clothing around the neck.' },
+  ],
 };
 
 interface DiagnosisResult {
