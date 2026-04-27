@@ -29,8 +29,12 @@ const Emergency = () => {
   const {
     hospitals: nearbyList,
     fetchStatus,
+    userLocation: nearbyUserLocation,
     refetch,
   } = useNearbyHospitals();
+
+  // Use emergency location if active, otherwise use the location from nearby hospitals fetch
+  const mapUserLocation = userLocation ?? nearbyUserLocation;
 
   const logsEndRef = useRef<HTMLDivElement>(null);
   const [mapTarget, setMapTarget] = useState<{ lat: number; lng: number } | null>(null);
@@ -56,7 +60,7 @@ const Emergency = () => {
   const activeStepIndex = STATUS_STEPS.findIndex(s => s.key === status);
 
   return (
-    <div style={{ animation: 'fadeIn 0.4s ease-out' }} className="flex flex-col gap-6 pt-2">
+    <div style={{ animation: 'fadeIn 0.4s ease-out' }} className="flex flex-col gap-8 pt-2 pb-8">
 
       {/* ── Header ── */}
       <div className="flex justify-between items-center">
@@ -111,19 +115,19 @@ const Emergency = () => {
       </div>
 
       {/* ── Main grid ── */}
-      <div className="grid grid-cols-1 lg:grid-cols-3 gap-6">
+      <div className="grid grid-cols-1 lg:grid-cols-3 gap-8">
 
         {/* LEFT: Map + controls */}
-        <div className="lg:col-span-2 flex flex-col gap-5">
+        <div className="lg:col-span-2 flex flex-col gap-6">
 
           {/* Leaflet Map */}
           <div className="overflow-hidden border-4 border-slate-700 shadow-2xl bg-slate-900"
             style={{ height: '400px', borderRadius: '1.5rem', position: 'relative' }}>
             <EmergencyMap
-              userLocation={userLocation}
+              userLocation={mapUserLocation}
               selectedHospital={selectedHospital}
               ambulanceLocation={ambulanceLocation}
-              allHospitals={allHospitals}
+              allHospitals={allHospitals.length > 0 ? allHospitals : nearbyList}
               route={route}
               isActive={isActive}
               focusTarget={mapTarget}
@@ -246,7 +250,7 @@ const Emergency = () => {
           </div>
 
           {/* ── Nearby Hospitals Section ── */}
-          <div className="flex flex-col gap-4">
+          <div className="flex flex-col gap-5 pt-2 border-t-2 border-border mt-2">
             <div className="flex items-center justify-between">
               <div>
                 <h2 className="font-black text-xl flex items-center gap-2" style={{ color: 'var(--text-main)' }}>
@@ -282,14 +286,14 @@ const Emergency = () => {
 
             {/* Hospital cards grid */}
             {nearbyList.length > 0 && (
-              <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
+              <div className="grid grid-cols-1 md:grid-cols-2 gap-5">
                 {nearbyList.map(h => {
                   const c = capacityColor(h.color);
                   const label = capacityLabel(h.color);
                   const isEmergencySelected = selectedHospital?.id === h.id;
                   return (
                     <div key={h.id}
-                      className="card border shadow-sm flex flex-col gap-3 transition-all duration-200"
+                      className="card border shadow-sm flex flex-col gap-4 transition-all duration-200 p-5"
                       style={{
                         borderColor: isEmergencySelected ? c : 'var(--border)',
                         boxShadow: isEmergencySelected ? `0 0 0 2px ${c}40` : undefined,
@@ -376,7 +380,7 @@ const Emergency = () => {
         </div>
 
         {/* RIGHT: Hospital status + Logs */}
-        <div className="flex flex-col gap-5">
+        <div className="flex flex-col gap-6">
 
           {/* Hospital load balancing */}
           <div className="card border border-border shadow-sm flex flex-col gap-4">

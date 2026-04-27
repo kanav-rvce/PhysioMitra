@@ -4,7 +4,7 @@ import { Users, GraduationCap, Brain, Activity, Shield, Cpu, HeartPulse, Code2 }
 const team = [
   {
     name: 'Kanav Bansal',
-    degree: "RVCE '28 CSE",
+    degree: "RVCE '28 | CSE",
     avatar: 'KB',
     photo: '/kanav.jpg',
     color: '#0EA5E9',
@@ -20,7 +20,7 @@ const team = [
   },
   {
     name: 'Pratham',
-    degree: "RVCE '28 CY",
+    degree: "RVCE '28 | CY",
     avatar: 'PR',
     photo: '/pratham.jpg',
     color: '#8B5CF6',
