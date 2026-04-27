@@ -5,8 +5,8 @@
 import { useState, useRef, useCallback } from 'react';
 import type { Hospital } from '../services/hospitalService';
 import { AmbulanceSimulator } from '../services/ambulanceSimulator';
-import { selectOptimalHospital, calculateRouteToHospital } from '../services/hospitalSelectionService';
-import { updateHospitalLoad } from '../services/hospitalService';
+import { selectOptimalHospital, calculateRouteToHospital, getAlternativeHospitals } from '../services/hospitalSelectionService';
+import { updateHospitalLoad, fakeHospitals } from '../services/hospitalService';
 
 export type EmergencyStatus = 'idle' | 'locating' | 'selecting' | 'dispatched' | 'en-route' | 'arrived';
 
@@ -26,6 +26,8 @@ export interface EmergencyState {
   status: EmergencyStatus;
   route: Array<{ lat: number; lng: number }> | null;
   distance: number;
+  nearbyHospitals: Hospital[];
+  messageSent: boolean;
 }
 
 const initialState: EmergencyState = {
@@ -38,6 +40,8 @@ const initialState: EmergencyState = {
   status: 'idle',
   route: null,
   distance: 0,
+  nearbyHospitals: [],
+  messageSent: false,
 };
 
 export const useEmergency = () => {
@@ -62,14 +66,17 @@ export const useEmergency = () => {
     setState({ ...initialState, isActive: true, status: 'locating', logs: [] });
 
     const userLocation = await requestLocation();
+    const nearby = getAlternativeHospitals(userLocation.lat, userLocation.lng, 15, 10);
 
     setState(prev => ({
       ...prev,
       userLocation,
       status: 'selecting',
+      nearbyHospitals: nearby,
       logs: [
         { time: new Date().toLocaleTimeString(), event: 'Emergency initiated' },
         { time: new Date().toLocaleTimeString(), event: 'GPS coordinates acquired', details: `${userLocation.lat.toFixed(4)}°N, ${Math.abs(userLocation.lng).toFixed(4)}°W` },
+        { time: new Date().toLocaleTimeString(), event: 'Scanning nearby hospitals', details: `${nearby.length} hospitals found` },
       ],
     }));
 
@@ -149,6 +156,20 @@ export const useEmergency = () => {
     }));
   }, []);
 
+  const contactHospital = useCallback(() => {
+    if (!state.selectedHospital) return;
+    setState(prev => ({
+      ...prev,
+      messageSent: true,
+      logs: [
+        ...prev.logs,
+        { time: new Date().toLocaleTimeString(), event: 'Direct message sent to hospital', details: state.selectedHospital!.name },
+        { time: new Date().toLocaleTimeString(), event: 'Hospital acknowledged message', details: 'Help is on the way' },
+      ],
+    }));
+    setTimeout(() => setState(prev => ({ ...prev, messageSent: false })), 3000);
+  }, [state.selectedHospital]);
+
   const toggleAlert = useCallback(() => {
     if (!state.isActive) {
       initiateEmergency();
@@ -157,5 +178,5 @@ export const useEmergency = () => {
     }
   }, [state.isActive, initiateEmergency, cancelEmergency]);
 
-  return { ...state, toggleAlert, cancelEmergency };
+  return { ...state, allHospitals: fakeHospitals, toggleAlert, cancelEmergency, contactHospital };
 };
