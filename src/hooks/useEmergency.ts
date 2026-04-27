@@ -31,6 +31,7 @@ export interface EmergencyState {
   selectedHospital: Hospital | null;
   ambulanceLocation: { lat: number; lng: number } | null;
   eta: number;
+  progress: number;
   logs: LogEntry[];
   status: EmergencyStatus;
   route: Array<{ lat: number; lng: number }> | null;
@@ -45,6 +46,7 @@ const initialState: EmergencyState = {
   selectedHospital: null,
   ambulanceLocation: null,
   eta: 0,
+  progress: 0,
   logs: [],
   status: 'idle',
   route: null,
@@ -186,6 +188,7 @@ export const useEmergency = () => {
           ...prev,
           ambulanceLocation: simState.currentPosition,
           eta: Math.round(simState.eta),
+          progress: Math.round(simState.progress),
         }));
 
         if (sim.isComplete()) {
@@ -193,6 +196,7 @@ export const useEmergency = () => {
           setState(prev => ({
             ...prev,
             status: 'arrived',
+            progress: 100,
             logs: [
               ...prev.logs,
               {
@@ -203,7 +207,7 @@ export const useEmergency = () => {
             ],
           }));
         }
-      }, 2500);
+      }, 1000); // 1s interval for smooth movement
     }, delay);
   }, [requestLocation]);
 

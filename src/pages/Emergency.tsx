@@ -9,7 +9,7 @@ import EmergencyMap from '../components/EmergencyMap';
 const Emergency = () => {
   const {
     isActive, userLocation, selectedHospital, ambulanceLocation,
-    eta, logs, status, route, distance, allHospitals,
+    eta, progress, logs, status, route, distance, allHospitals,
     messageSent, toggleAlert, contactHospital,
   } = useEmergency();
 
@@ -73,6 +73,7 @@ const Emergency = () => {
               ambulanceLocation={ambulanceLocation}
               allHospitals={allHospitals}
               route={route}
+              isActive={isActive}
             />
             {/* HUD overlay */}
             <div className="absolute bottom-4 left-4 z-[1000] flex gap-3 pointer-events-none">
@@ -85,7 +86,7 @@ const Emergency = () => {
                   </div>
                 </div>
               )}
-              {isActive && status !== 'idle' && (
+              {status === 'en-route' && (
                 <div className="bg-slate-900/90 backdrop-blur text-white px-4 py-2.5 rounded-2xl border border-yellow-500/50 flex items-center gap-2.5">
                   <Clock size={18} className="text-yellow-400 animate-pulse" />
                   <div>
@@ -96,6 +97,61 @@ const Emergency = () => {
               )}
             </div>
           </div>
+
+          {/* Ambulance progress bar — shown only when en-route */}
+          {status === 'en-route' && (
+            <div className="card border-2 border-yellow-400/40 shadow-md p-4 flex flex-col gap-2"
+              style={{ background: '#fffbeb' }}>
+              <div className="flex items-center justify-between">
+                <div className="flex items-center gap-2">
+                  <span style={{ fontSize: '22px' }}>🚑</span>
+                  <span className="font-black text-sm" style={{ color: '#92400e' }}>Ambulance En Route</span>
+                </div>
+                <div className="flex items-center gap-2 px-3 py-1 rounded-xl"
+                  style={{ background: '#fef3c7', border: '1px solid #fcd34d' }}>
+                  <Clock size={14} className="text-yellow-600 animate-pulse" />
+                  <span className="font-black text-base text-yellow-700">{formatETA(eta)}</span>
+                </div>
+              </div>
+              {/* Progress track */}
+              <div className="relative w-full h-4 bg-slate-200 rounded-full overflow-hidden">
+                <div
+                  className="h-full rounded-full transition-all duration-1000"
+                  style={{
+                    width: `${progress}%`,
+                    background: 'linear-gradient(90deg, #f59e0b, #ef4444)',
+                    boxShadow: '0 0 8px rgba(245,158,11,0.6)',
+                  }}
+                />
+                {/* Ambulance emoji riding the bar */}
+                <span style={{
+                  position: 'absolute',
+                  top: '-4px',
+                  left: `calc(${Math.min(progress, 96)}% - 10px)`,
+                  fontSize: '18px',
+                  transition: 'left 1s ease',
+                  filter: 'drop-shadow(0 1px 2px rgba(0,0,0,0.3))',
+                }}>🚑</span>
+              </div>
+              <div className="flex justify-between text-[10px] font-bold" style={{ color: '#92400e' }}>
+                <span>🏥 Hospital</span>
+                <span>{progress}% of route covered</span>
+                <span>📍 You</span>
+              </div>
+            </div>
+          )}
+
+          {/* Arrived banner */}
+          {status === 'arrived' && (
+            <div className="card border-2 border-green-400 p-4 flex items-center gap-3"
+              style={{ background: '#f0fdf4' }}>
+              <span style={{ fontSize: '28px' }}>✅</span>
+              <div>
+                <p className="font-black text-green-700 text-base">Ambulance has arrived!</p>
+                <p className="text-green-600 text-sm font-semibold">Stay calm. Paramedics are on scene.</p>
+              </div>
+            </div>
+          )}
 
           {/* Initiate / Cancel card */}
           <div className="card shadow-md flex items-center justify-between p-7 border-4 transition-all duration-300"
