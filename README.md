@@ -1,73 +1,49 @@
-# React + TypeScript + Vite
+# PhysioMitra
 
-This template provides a minimal setup to get React working in Vite with HMR and some ESLint rules.
+PhysioMitra is an AI-powered digital healthcare platform focused on intelligent physiotherapy assistance and early-stage clinical support. The system combines computer vision, probabilistic reasoning, and real-time analytics to deliver accessible and personalized healthcare guidance through a web-based interface.
 
-Currently, two official plugins are available:
+## 🚀 Key Features
 
-- [@vitejs/plugin-react](https://github.com/vitejs/vite-plugin-react/blob/main/packages/plugin-react) uses [Oxc](https://oxc.rs)
-- [@vitejs/plugin-react-swc](https://github.com/vitejs/vite-plugin-react/blob/main/packages/plugin-react-swc) uses [SWC](https://swc.rs/)
+- **AI-Based Physiotherapy Guidance**  
+  Real-time posture detection using MediaPipe with joint angle analysis and corrective feedback.
 
-## React Compiler
+- **Probabilistic Symptom Analysis**  
+  Bayesian-inspired model to predict possible conditions based on user symptoms with confidence scores.
 
-The React Compiler is not enabled on this template because of its impact on dev & build performances. To add it, see [this documentation](https://react.dev/learn/react-compiler/installation).
+- **Smart Hospital Recommendation System**  
+  Graph-based routing with load-aware hospital selection and geospatial visualization.
 
-## Expanding the ESLint configuration
+- **Real-Time Feedback Engine**  
+  Dynamic exercise correction using biomechanical analysis and angle deviation tracking.
 
-If you are developing a production application, we recommend updating the configuration to enable type-aware lint rules:
+- **Interactive Dashboard**  
+  Visual insights including posture accuracy, recovery trends, and system analytics.
 
-```js
-export default defineConfig([
-  globalIgnores(['dist']),
-  {
-    files: ['**/*.{ts,tsx}'],
-    extends: [
-      // Other configs...
+## 🧠 Tech Stack
 
-      // Remove tseslint.configs.recommended and replace with this
-      tseslint.configs.recommendedTypeChecked,
-      // Alternatively, use this for stricter rules
-      tseslint.configs.strictTypeChecked,
-      // Optionally, add this for stylistic rules
-      tseslint.configs.stylisticTypeChecked,
+- **Frontend:** React (Vite), Tailwind CSS  
+- **Backend:** Node.js, Express  
+- **AI / CV:** MediaPipe, JavaScript-based processing  
+- **Data Handling:** JSON datasets, MongoDB (optional)  
+- **Visualization:** Chart.js, Leaflet.js  
 
-      // Other configs...
-    ],
-    languageOptions: {
-      parserOptions: {
-        project: ['./tsconfig.node.json', './tsconfig.app.json'],
-        tsconfigRootDir: import.meta.dirname,
-      },
-      // other options...
-    },
-  },
-])
-```
+## ⚙️ System Architecture
 
-You can also install [eslint-plugin-react-x](https://github.com/Rel1cx/eslint-react/tree/main/packages/plugins/eslint-plugin-react-x) and [eslint-plugin-react-dom](https://github.com/Rel1cx/eslint-react/tree/main/packages/plugins/eslint-plugin-react-dom) for React-specific lint rules:
+The platform follows a modular architecture:
+- Pose Estimation Module (Computer Vision)
+- Posture Analysis Engine (Mathematical Modeling)
+- Symptom Prediction Module (Probabilistic Logic)
+- Hospital Routing System (Graph-Based Optimization)
+- API Layer (Client-Server Communication)
 
-```js
-// eslint.config.js
-import reactX from 'eslint-plugin-react-x'
-import reactDom from 'eslint-plugin-react-dom'
+## 🎯 Objective
 
-export default defineConfig([
-  globalIgnores(['dist']),
-  {
-    files: ['**/*.{ts,tsx}'],
-    extends: [
-      // Other configs...
-      // Enable lint rules for React
-      reactX.configs['recommended-typescript'],
-      // Enable lint rules for React DOM
-      reactDom.configs.recommended,
-    ],
-    languageOptions: {
-      parserOptions: {
-        project: ['./tsconfig.node.json', './tsconfig.app.json'],
-        tsconfigRootDir: import.meta.dirname,
-      },
-      // other options...
-    },
-  },
-])
-```
+To bridge the gap between patients and physiotherapy care by providing an intelligent, accessible, and scalable healthcare support system that enables early intervention, guided recovery, and informed decision-making.
+
+## 🌍 Vision
+
+To evolve into a scalable digital health platform that integrates AI-driven rehabilitation, smart diagnostics, and real-time healthcare accessibility for wider populations.
+
+---
+
+> ⚠️ Disclaimer: This platform provides guidance and should not be considered a substitute for professional medical advice.
