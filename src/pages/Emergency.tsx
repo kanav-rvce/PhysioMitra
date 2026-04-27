@@ -34,6 +34,7 @@ const Emergency = () => {
   const statusLabel = !isActive ? 'ON STANDBY'
     : status === 'arrived' ? 'ARRIVED'
     : status === 'locating' ? 'LOCATING'
+    : status === 'fetching' ? 'FETCHING'
     : status === 'selecting' ? 'SELECTING'
     : status === 'dispatched' ? 'ALERT SENT'
     : status === 'en-route' ? 'EN ROUTE'
@@ -108,7 +109,8 @@ const Emergency = () => {
                 {!isActive ? '🚨 Initiate Emergency'
                   : status === 'arrived' ? '✅ Ambulance Arrived'
                   : status === 'locating' ? '📡 Acquiring Location...'
-                  : status === 'selecting' ? '🔍 Selecting Hospital...'
+                  : status === 'fetching' ? '🔍 Fetching Nearby Hospitals...'
+                  : status === 'selecting' ? '⚡ Selecting Best Hospital...'
                   : status === 'dispatched' ? '📤 Alert Sent — Awaiting Dispatch'
                   : '🚑 Ambulance En Route'}
               </h2>
