@@ -1,59 +1,161 @@
 /**
- * Logic hook binding the emergency alert systems and counters.
+ * Emergency hook — manages full emergency SOS flow including
+ * location, hospital selection, ambulance simulation, and live logs.
  */
-import { useState, useEffect, useRef, useCallback } from 'react';
+import { useState, useRef, useCallback } from 'react';
+import type { Hospital } from '../services/hospitalService';
+import { AmbulanceSimulator } from '../services/ambulanceSimulator';
+import { selectOptimalHospital, calculateRouteToHospital } from '../services/hospitalSelectionService';
+import { updateHospitalLoad } from '../services/hospitalService';
+
+export type EmergencyStatus = 'idle' | 'locating' | 'selecting' | 'dispatched' | 'en-route' | 'arrived';
+
+export interface LogEntry {
+  time: string;
+  event: string;
+  details?: string;
+}
+
+export interface EmergencyState {
+  isActive: boolean;
+  userLocation: { lat: number; lng: number } | null;
+  selectedHospital: Hospital | null;
+  ambulanceLocation: { lat: number; lng: number } | null;
+  eta: number;
+  logs: LogEntry[];
+  status: EmergencyStatus;
+  route: Array<{ lat: number; lng: number }> | null;
+  distance: number;
+}
+
+const initialState: EmergencyState = {
+  isActive: false,
+  userLocation: null,
+  selectedHospital: null,
+  ambulanceLocation: null,
+  eta: 0,
+  logs: [],
+  status: 'idle',
+  route: null,
+  distance: 0,
+};
 
 export const useEmergency = () => {
-    const [isAlertActive, setIsAlertActive] = useState(false);
-    const [countdown, setCountdown] = useState(5);
-    const [statusUpdates, setStatusUpdates] = useState(['Monitoring biometrics parameters...', 'System on standby.']);
-    const timerRef = useRef<ReturnType<typeof setTimeout> | null>(null);
-    const hasShownMessageRef = useRef<Record<number, boolean>>({});
+  const [state, setState] = useState<EmergencyState>(initialState);
+  const ambulanceRef = useRef<AmbulanceSimulator | null>(null);
+  const intervalRef = useRef<ReturnType<typeof setInterval> | null>(null);
 
-    useEffect(() => {
-        if (!isAlertActive) {
-            hasShownMessageRef.current = {};
-            return;
+  const requestLocation = useCallback((): Promise<{ lat: number; lng: number }> => {
+    return new Promise(resolve => {
+      if (!navigator.geolocation) {
+        resolve({ lat: 40.7128, lng: -74.006 });
+        return;
+      }
+      navigator.geolocation.getCurrentPosition(
+        pos => resolve({ lat: pos.coords.latitude, lng: pos.coords.longitude }),
+        () => resolve({ lat: 40.7128, lng: -74.006 })
+      );
+    });
+  }, []);
+
+  const initiateEmergency = useCallback(async () => {
+    setState({ ...initialState, isActive: true, status: 'locating', logs: [] });
+
+    const userLocation = await requestLocation();
+
+    setState(prev => ({
+      ...prev,
+      userLocation,
+      status: 'selecting',
+      logs: [
+        { time: new Date().toLocaleTimeString(), event: 'Emergency initiated' },
+        { time: new Date().toLocaleTimeString(), event: 'GPS coordinates acquired', details: `${userLocation.lat.toFixed(4)}°N, ${Math.abs(userLocation.lng).toFixed(4)}°W` },
+      ],
+    }));
+
+    const hospital = selectOptimalHospital(userLocation.lat, userLocation.lng);
+    if (!hospital) {
+      setState(prev => ({
+        ...prev,
+        logs: [...prev.logs, { time: new Date().toLocaleTimeString(), event: 'Error — no hospitals found nearby' }],
+        status: 'idle',
+        isActive: false,
+      }));
+      return;
+    }
+
+    const routeData = calculateRouteToHospital(userLocation.lat, userLocation.lng, hospital);
+    updateHospitalLoad(hospital.id, 15);
+
+    setState(prev => ({
+      ...prev,
+      selectedHospital: hospital,
+      route: routeData.path,
+      distance: routeData.distance,
+      eta: routeData.eta,
+      status: 'dispatched',
+      logs: [
+        ...prev.logs,
+        { time: new Date().toLocaleTimeString(), event: 'Nearest available hospital identified', details: hospital.name },
+        { time: new Date().toLocaleTimeString(), event: 'SOS alert transmitted', details: `${hospital.name} — ${routeData.distance.toFixed(1)} km away` },
+      ],
+    }));
+
+    const delay = 30000 + Math.random() * 10000;
+    setTimeout(() => {
+      setState(prev => ({
+        ...prev,
+        status: 'en-route',
+        logs: [
+          ...prev.logs,
+          { time: new Date().toLocaleTimeString(), event: 'Hospital confirmed receipt of alert', details: hospital.name },
+          { time: new Date().toLocaleTimeString(), event: 'Ambulance dispatched', details: `ETA ~${Math.round(routeData.eta / 60)} min` },
+        ],
+      }));
+
+      const sim = new AmbulanceSimulator(routeData.path, routeData.distance, routeData.eta);
+      ambulanceRef.current = sim;
+      sim.start();
+
+      intervalRef.current = setInterval(() => {
+        const simState = sim.getState();
+        setState(prev => ({
+          ...prev,
+          ambulanceLocation: simState.currentPosition,
+          eta: Math.round(simState.eta),
+        }));
+
+        if (sim.isComplete()) {
+          clearInterval(intervalRef.current!);
+          setState(prev => ({
+            ...prev,
+            status: 'arrived',
+            logs: [
+              ...prev.logs,
+              { time: new Date().toLocaleTimeString(), event: 'Ambulance arrived on scene', details: 'Emergency response complete' },
+            ],
+          }));
         }
+      }, 2500);
+    }, delay);
+  }, [requestLocation]);
 
-        if (countdown > 0) {
-            timerRef.current = setTimeout(() => setCountdown(c => c - 1), 1000);
-        } else if (countdown === 0 && !hasShownMessageRef.current[0]) {
-            hasShownMessageRef.current[0] = true;
-            setStatusUpdates(prev => ['ALERT SENT: First responders dispatched. ETA 4 mins.', ...prev]);
-        }
+  const cancelEmergency = useCallback(() => {
+    if (intervalRef.current) clearInterval(intervalRef.current);
+    if (ambulanceRef.current) ambulanceRef.current.stop();
+    setState(prev => ({
+      ...initialState,
+      logs: [...prev.logs, { time: new Date().toLocaleTimeString(), event: 'Emergency cancelled by user' }],
+    }));
+  }, []);
 
-        return () => {
-            if (timerRef.current) clearTimeout(timerRef.current);
-        };
-    }, [isAlertActive, countdown]);
+  const toggleAlert = useCallback(() => {
+    if (!state.isActive) {
+      initiateEmergency();
+    } else {
+      cancelEmergency();
+    }
+  }, [state.isActive, initiateEmergency, cancelEmergency]);
 
-    useEffect(() => {
-        if (!isAlertActive) return;
-
-        if (countdown === 5 && !hasShownMessageRef.current[5]) {
-            hasShownMessageRef.current[5] = true;
-            setStatusUpdates(prev => ['Initiating A* routing to the nearest available trauma center...', ...prev]);
-        } else if (countdown === 3 && !hasShownMessageRef.current[3]) {
-            hasShownMessageRef.current[3] = true;
-            setStatusUpdates(prev => ['Locking GPS coordinates: 40.7128° N, 74.0060° W...', ...prev]);
-        } else if (countdown === 1 && !hasShownMessageRef.current[1]) {
-            hasShownMessageRef.current[1] = true;
-            setStatusUpdates(prev => ['Transmitting medical profile and vitals to dispatch...', ...prev]);
-        }
-    }, [countdown, isAlertActive]);
-
-    const toggleAlert = useCallback(() => {
-        setIsAlertActive(prev => {
-            if (!prev) {
-                setCountdown(5);
-                hasShownMessageRef.current = {};
-            } else {
-                setStatusUpdates(s => ['Emergency trigger manually cancelled.', 'Resuming normal perimeter monitoring...', ...s]);
-            }
-            return !prev;
-        });
-    }, []);
-
-    return { isAlertActive, countdown, statusUpdates, toggleAlert };
-}
+  return { ...state, toggleAlert, cancelEmergency };
+};
