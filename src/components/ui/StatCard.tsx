@@ -3,9 +3,17 @@
  */
 
 
-export const StatCard = ({ title, value, unit, icon: Icon, status }: any) => {
+interface StatCardProps {
+  title: string;
+  value: string | number;
+  unit: string;
+  icon: React.ComponentType<{ size: number; style?: React.CSSProperties }>;
+  status: 'safe' | 'warning' | 'critical';
+}
 
-    const statusBg: any = {
+export const StatCard = ({ title, value, unit, icon: Icon, status }: StatCardProps) => {
+
+    const statusBg: Record<'safe' | 'warning' | 'critical', string> = {
         safe: 'var(--background)',
         warning: '#fef3c7',
         critical: '#fee2e2'

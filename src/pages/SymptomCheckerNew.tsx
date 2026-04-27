@@ -1,18 +1,31 @@
 import { useState, useRef, useEffect } from 'react';
 import { createPortal } from 'react-dom';
 import { Stethoscope, Search, AlertTriangle, CheckCircle, ChevronRight, Info, Activity, X } from 'lucide-react';
-import { symptoms, runBayesianDiagnosis, getSelfCareTips } from '../data/symptomData';
+import type { Symptom } from '../data/symptomDataNew';
+import { symptoms, runBayesianDiagnosis } from '../data/symptomDataNew';
 
 interface DiagnosisResult {
-  condition: string;
+  label: string;
+  value: number;
+  color?: string;
   description: string;
   specialist: string;
   isPhysioRelevant: boolean;
-  probability: number;
-  color: string;
-  rank: number;
-  percentageProbability: number;
 }
+
+const categoryLabels: Record<string, { label: string; icon: string; color: string }> = {
+  physio: { label: '🦴 Musculoskeletal / Physio', icon: '🦴', color: '#10b981' },
+  neurological: { label: '🧠 Neurological / Mental', icon: '🧠', color: '#8b5cf6' },
+  cardiovascular: { label: '❤️ Cardiovascular', icon: '❤️', color: '#ef4444' },
+  respiratory: { label: '🫁 Respiratory', icon: '🫁', color: '#0EA5E9' },
+  digestive: { label: '🍽️ Digestive', icon: '🍽️', color: '#f59e0b' },
+  skin: { label: '🧴 Skin / Hair', icon: '🧴', color: '#ec4899' },
+  ent: { label: '👁️ ENT (Ear, Nose, Throat)', icon: '👁️', color: '#06b6d4' },
+  hormonal: { label: '🧬 Hormonal / General Health', icon: '🧬', color: '#a855f7' },
+  sleep: { label: '😴 Sleep / Lifestyle', icon: '😴', color: '#6366f1' },
+  general: { label: '⚕️ General', icon: '⚕️', color: '#64748b' },
+  redFlag: { label: '🚨 Red Flag Symptoms (URGENT)', icon: '🚨', color: '#dc2626' },
+};
 
 const SymptomChecker = () => {
   const [selected, setSelected] = useState<string[]>([]);
@@ -49,19 +62,16 @@ const SymptomChecker = () => {
     return () => document.removeEventListener('mousedown', handler);
   }, []);
 
-  const physioSymptoms = symptoms.filter(s => s.isPhysioRelated);
-  const generalSymptoms = symptoms.filter(s => !s.isPhysioRelated);
-
-  const filteredPhysio = physioSymptoms.filter(s =>
-    s.label.toLowerCase().includes(searchQuery.toLowerCase())
-  );
-  const filteredGeneral = generalSymptoms.filter(s =>
-    s.label.toLowerCase().includes(searchQuery.toLowerCase())
-  );
-
+  const selectedSymptomLabels = selected.map(id => symptoms.find(s => s.id === id)!).filter(Boolean);
   const hasPhysioResult = results.some(r => r.isPhysioRelevant);
 
-  const selectedSymptomLabels = selected.map(id => symptoms.find(s => s.id === id)!).filter(Boolean);
+  // Group symptoms by category
+  const symptomsByCategory = Object.keys(categoryLabels).reduce((acc, cat) => {
+    acc[cat] = symptoms
+      .filter((s: Symptom) => s.category === cat)
+      .filter(s => s.label.toLowerCase().includes(searchQuery.toLowerCase()));
+    return acc;
+  }, {} as Record<string, typeof symptoms>);
 
   const openTooltip = (e: React.MouseEvent<HTMLButtonElement>, result: DiagnosisResult) => {
     e.stopPropagation();
@@ -76,14 +86,9 @@ const SymptomChecker = () => {
 
   return (
     <div style={{ animation: 'fadeIn 0.4s ease-out' }}>
-      {/* Floating tooltip portal */}
       {tooltip && createPortal(
         <>
-          {/* Invisible backdrop to catch outside clicks */}
-          <div
-            onClick={() => setTooltip(null)}
-            style={{ position: 'fixed', inset: 0, zIndex: 9998 }}
-          />
+          <div onClick={() => setTooltip(null)} style={{ position: 'fixed', inset: 0, zIndex: 9998 }} />
           <div
             ref={tooltipRef}
             style={{
@@ -100,23 +105,23 @@ const SymptomChecker = () => {
               isolation: 'isolate',
             }}
           >
-          <div className="flex items-start justify-between gap-2 mb-2">
-            <span className="font-bold text-main text-sm">{tooltip.result.condition}</span>
-            <button onClick={() => setTooltip(null)} style={{ color: 'var(--text-muted)', flexShrink: 0 }}>
-              <X size={14} />
-            </button>
-          </div>
-          <p className="text-sm" style={{ color: 'var(--text-muted)', lineHeight: 1.5 }}>{tooltip.result.description}</p>
-          <div className="mt-3 pt-3" style={{ borderTop: '1px solid var(--border)' }}>
-            <span className="text-xs font-semibold" style={{ color: 'var(--text-muted)' }}>Recommended Specialist</span>
-            <p className="text-sm font-bold text-primary mt-0.5">{tooltip.result.specialist}</p>
-          </div>
-          {tooltip.result.isPhysioRelevant && (
-            <div className="mt-2 flex items-center gap-1.5 px-2 py-1 rounded-lg" style={{ background: 'rgba(16,185,129,0.1)' }}>
-              <Activity size={12} style={{ color: '#10b981' }} />
-              <span className="text-xs font-semibold" style={{ color: '#10b981' }}>Physiotherapy Recommended</span>
+            <div className="flex items-start justify-between gap-2 mb-2">
+              <span className="font-bold text-main text-sm">{tooltip.result.label}</span>
+              <button onClick={() => setTooltip(null)} style={{ color: 'var(--text-muted)', flexShrink: 0 }}>
+                <X size={14} />
+              </button>
             </div>
-          )}
+            <p className="text-sm" style={{ color: 'var(--text-muted)', lineHeight: 1.5 }}>{tooltip.result.description}</p>
+            <div className="mt-3 pt-3" style={{ borderTop: '1px solid var(--border)' }}>
+              <span className="text-xs font-semibold" style={{ color: 'var(--text-muted)' }}>Recommended Specialist</span>
+              <p className="text-sm font-bold text-primary mt-0.5">{tooltip.result.specialist}</p>
+            </div>
+            {tooltip.result.isPhysioRelevant && (
+              <div className="mt-2 flex items-center gap-1.5 px-2 py-1 rounded-lg" style={{ background: 'rgba(16,185,129,0.1)' }}>
+                <Activity size={12} style={{ color: '#10b981' }} />
+                <span className="text-xs font-semibold" style={{ color: '#10b981' }}>Physiotherapy Recommended</span>
+              </div>
+            )}
           </div>
         </>,
         document.body
@@ -132,7 +137,7 @@ const SymptomChecker = () => {
       </div>
 
       <div className="grid grid-cols-1 lg:grid-cols-3 gap-6">
-        {/* Left: Symptom Selection */}
+        {/* Left: Symptom Selection with scrollable categories */}
         <div className="lg:col-span-2 flex flex-col gap-4">
           {/* Search */}
           <div className="card border border-border shadow-sm" style={{ padding: '12px 16px' }}>
@@ -140,7 +145,7 @@ const SymptomChecker = () => {
               <Search size={16} style={{ color: 'var(--text-muted)' }} />
               <input
                 type="text"
-                placeholder="Search For Symptoms"
+                placeholder="Search symptoms..."
                 value={searchQuery}
                 onChange={e => setSearchQuery(e.target.value)}
                 style={{ background: 'transparent', border: 'none', outline: 'none', width: '100%', fontSize: '0.9rem', color: 'var(--text-main)' }}
@@ -153,59 +158,46 @@ const SymptomChecker = () => {
             </div>
           </div>
 
-          {/* Physio Symptoms */}
-          <div className="card border border-border shadow-sm">
-            <h3 className="font-bold text-main mb-1 flex items-center gap-2">
-              <Activity size={18} style={{ color: '#10b981' }} />
-              Physiotherapy-Related Symptoms
-            </h3>
-            <p className="text-xs mb-4" style={{ color: 'var(--text-muted)' }}>
-              These symptoms may indicate conditions where physiotherapy is the primary treatment.
-            </p>
-            <div style={{ maxHeight: '280px', overflowY: 'auto', paddingRight: '8px' }}>
-              <div className="flex flex-wrap gap-2">
-                {filteredPhysio.map(symptom => (
-                  <button
-                    key={symptom.id}
-                    onClick={() => toggle(symptom.id)}
-                    className={`btn ${selected.includes(symptom.id) ? 'btn-primary' : 'btn-outline'}`}
-                    style={{
-                      fontSize: '0.82rem', padding: '0.4rem 0.9rem',
-                      borderColor: selected.includes(symptom.id) ? undefined : '#10b981',
-                      color: selected.includes(symptom.id) ? undefined : '#10b981',
-                    }}
-                  >
-                    {selected.includes(symptom.id) && <CheckCircle size={13} />}
-                    {symptom.label}
-                  </button>
-                ))}
-                {filteredPhysio.length === 0 && <p className="text-sm" style={{ color: 'var(--text-muted)' }}>No matching symptoms.</p>}
+          {/* Symptom categories with scroll */}
+          {Object.entries(symptomsByCategory).map(([category, syms]) => {
+            if (syms.length === 0) return null;
+            const cat = categoryLabels[category];
+            return (
+              <div key={category} className="card border border-border shadow-sm">
+                <h3 className="font-bold text-main mb-3" style={{ fontSize: '0.95rem' }}>
+                  {cat.label}
+                </h3>
+                <div
+                  style={{
+                    display: 'flex',
+                    flexWrap: 'wrap',
+                    gap: '8px',
+                    maxHeight: '180px',
+                    overflowY: 'auto',
+                    paddingRight: '8px',
+                  }}
+                >
+                  {syms.map(symptom => (
+                    <button
+                      key={symptom.id}
+                      onClick={() => toggle(symptom.id)}
+                      className={`btn ${selected.includes(symptom.id) ? 'btn-primary' : 'btn-outline'}`}
+                      style={{
+                        fontSize: '0.8rem',
+                        padding: '0.35rem 0.85rem',
+                        borderColor: selected.includes(symptom.id) ? undefined : cat.color,
+                        color: selected.includes(symptom.id) ? undefined : cat.color,
+                        flexShrink: 0,
+                      }}
+                    >
+                      {selected.includes(symptom.id) && <CheckCircle size={12} />}
+                      {symptom.label}
+                    </button>
+                  ))}
+                </div>
               </div>
-            </div>
-          </div>
-
-          {/* General Symptoms */}
-          <div className="card border border-border shadow-sm">
-            <h3 className="font-bold text-main mb-3 flex items-center gap-2">
-              <Search size={18} className="text-primary" /> General Symptoms
-            </h3>
-            <div style={{ maxHeight: '280px', overflowY: 'auto', paddingRight: '8px' }}>
-              <div className="flex flex-wrap gap-2">
-                {filteredGeneral.map(symptom => (
-                  <button
-                    key={symptom.id}
-                    onClick={() => toggle(symptom.id)}
-                    className={`btn ${selected.includes(symptom.id) ? 'btn-primary' : 'btn-outline'}`}
-                    style={{ fontSize: '0.82rem', padding: '0.4rem 0.9rem' }}
-                  >
-                    {selected.includes(symptom.id) && <CheckCircle size={13} />}
-                    {symptom.label}
-                  </button>
-                ))}
-                {filteredGeneral.length === 0 && <p className="text-sm" style={{ color: 'var(--text-muted)' }}>No matching symptoms.</p>}
-              </div>
-            </div>
-          </div>
+            );
+          })}
 
           {/* Selected symptoms as removable chips + Analyze */}
           {selected.length > 0 && (
@@ -228,7 +220,7 @@ const SymptomChecker = () => {
                       color: s.isPhysioRelated ? '#10b981' : 'var(--primary)',
                       border: `1px solid ${s.isPhysioRelated ? 'rgba(16,185,129,0.3)' : 'rgba(99,102,241,0.3)'}`,
                       borderRadius: '999px',
-                      fontSize: '0.78rem',
+                      fontSize: '0.75rem',
                       fontWeight: 600,
                       padding: '3px 10px 3px 10px',
                       cursor: 'default',
@@ -277,10 +269,10 @@ const SymptomChecker = () => {
 
                 <div className="flex flex-col gap-4">
                   {results.map(result => (
-                    <div key={result.condition}>
+                    <div key={result.label}>
                       <div className="flex justify-between items-center mb-1">
                         <div className="flex items-center gap-1.5">
-                          <span className="text-sm font-bold text-main">{result.condition}</span>
+                          <span className="text-sm font-bold text-main">{result.label}</span>
                           {result.isPhysioRelevant && (
                             <span style={{ background: 'rgba(16,185,129,0.15)', color: '#10b981', fontSize: '0.65rem', fontWeight: 700, padding: '1px 6px', borderRadius: '999px' }}>
                               PHYSIO
@@ -291,11 +283,11 @@ const SymptomChecker = () => {
                           </button>
                         </div>
                         <span className="text-sm font-extrabold" style={{ color: result.color || 'var(--primary)' }}>
-                          {result.percentageProbability}%
+                          {result.value}%
                         </span>
                       </div>
                       <div className="w-full rounded-full h-2.5 shadow-inner" style={{ background: 'var(--background)' }}>
-                        <div className="h-2.5 rounded-full" style={{ width: `${result.percentageProbability}%`, backgroundColor: result.color || 'var(--primary)', transition: 'width 0.6s ease' }} />
+                        <div className="h-2.5 rounded-full" style={{ width: `${result.value}%`, backgroundColor: result.color || 'var(--primary)', transition: 'width 0.6s ease' }} />
                       </div>
                       <p className="text-xs mt-1" style={{ color: 'var(--text-muted)' }}>See: {result.specialist}</p>
                     </div>
@@ -319,48 +311,6 @@ const SymptomChecker = () => {
           )}
         </div>
       </div>
-
-      {/* While You Wait — self care tips */}
-      {analyzed && selected.length > 0 && (() => {
-        const careTips = getSelfCareTips(selected);
-        if (careTips.length === 0) return null;
-        return (
-          <div className="mt-6 card border border-border shadow-sm">
-            <h3 className="font-bold text-main mb-1 flex items-center gap-2">
-              <span style={{ fontSize: '1.1rem' }}>🩺</span> While You Wait to See a Doctor
-            </h3>
-            <p className="text-xs mb-5" style={{ color: 'var(--text-muted)' }}>
-              Based on your selected symptoms, here are evidence-based temporary measures to manage discomfort before your appointment.
-            </p>
-            <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-4">
-              {careTips.map(({ symptomLabel, tips }) => (
-                <div
-                  key={symptomLabel}
-                  style={{
-                    background: 'var(--background)',
-                    borderRadius: '12px',
-                    padding: '14px',
-                    border: '1px solid var(--border)',
-                  }}
-                >
-                  <p className="text-sm font-bold text-main mb-3">{symptomLabel}</p>
-                  <div className="flex flex-col gap-2">
-                    {tips.map((t: { icon: string; tip: string }, i: number) => (
-                      <div key={i} className="flex items-start gap-2">
-                        <span style={{ fontSize: '1rem', flexShrink: 0, lineHeight: 1.4 }}>{t.icon}</span>
-                        <p className="text-xs" style={{ color: 'var(--text-muted)', lineHeight: 1.5 }}>{t.tip}</p>
-                      </div>
-                    ))}
-                  </div>
-                </div>
-              ))}
-            </div>
-            <p className="text-xs mt-4 pt-4" style={{ borderTop: '1px solid var(--border)', color: 'var(--text-muted)', lineHeight: 1.5 }}>
-              ⚠️ These are temporary self-care measures only. They do not replace professional medical advice. Always consult your doctor or physiotherapist.
-            </p>
-          </div>
-        );
-      })()}
     </div>
   );
 };
