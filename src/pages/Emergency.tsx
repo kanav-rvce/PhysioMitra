@@ -8,7 +8,7 @@ import EmergencyMap from '../components/EmergencyMap';
 
 const Emergency = () => {
   const {
-    isActive, userLocation, selectedHospital, ambulanceLocation,
+    isActive, isButtonDisabled, userLocation, selectedHospital, ambulanceLocation,
     eta, progress, logs, status, route, distance, allHospitals,
     messageSent, toggleAlert, contactHospital,
   } = useEmergency();
@@ -18,13 +18,6 @@ const Emergency = () => {
   useEffect(() => {
     logsEndRef.current?.scrollIntoView({ behavior: 'smooth' });
   }, [logs]);
-
-  const formatETA = (seconds: number) => {
-    if (seconds <= 0) return 'Arriving';
-    const m = Math.floor(seconds / 60);
-    const s = seconds % 60;
-    return m > 0 ? `${m}m ${s}s` : `${s}s`;
-  };
 
   const capacityColor = selectedHospital?.color === 'green' ? '#10b981'
     : selectedHospital?.color === 'yellow' ? '#f59e0b' : '#ef4444';
@@ -90,8 +83,10 @@ const Emergency = () => {
                 <div className="bg-slate-900/90 backdrop-blur text-white px-4 py-2.5 rounded-2xl border border-yellow-500/50 flex items-center gap-2.5">
                   <Clock size={18} className="text-yellow-400 animate-pulse" />
                   <div>
-                    <p className="text-[9px] uppercase tracking-widest text-slate-400 font-bold">ETA</p>
-                    <p className="text-base font-black text-yellow-400">{formatETA(eta)}</p>
+                    <p className="text-[9px] uppercase tracking-widest text-slate-400 font-bold">Ambulance ETA</p>
+                    <p className="text-base font-black text-yellow-400">
+                      {eta > 60 ? `${Math.floor(eta / 60)}m ${eta % 60}s` : `${eta}s`}
+                    </p>
                   </div>
                 </div>
               )}
@@ -110,32 +105,37 @@ const Emergency = () => {
                 <div className="flex items-center gap-2 px-3 py-1 rounded-xl"
                   style={{ background: '#fef3c7', border: '1px solid #fcd34d' }}>
                   <Clock size={14} className="text-yellow-600 animate-pulse" />
-                  <span className="font-black text-base text-yellow-700">{formatETA(eta)}</span>
+                  <span className="font-black text-sm text-yellow-700">
+                    {eta > 60
+                      ? `Arriving in ${Math.floor(eta / 60)}m ${eta % 60}s`
+                      : `Arriving in ${eta}s`}
+                  </span>
                 </div>
               </div>
               {/* Progress track */}
-              <div className="relative w-full h-4 bg-slate-200 rounded-full overflow-hidden">
+              <div className="relative w-full h-5 bg-slate-200 rounded-full overflow-visible mt-1">
                 <div
-                  className="h-full rounded-full transition-all duration-1000"
+                  className="h-full rounded-full transition-all duration-500"
                   style={{
                     width: `${progress}%`,
                     background: 'linear-gradient(90deg, #f59e0b, #ef4444)',
-                    boxShadow: '0 0 8px rgba(245,158,11,0.6)',
+                    boxShadow: '0 0 8px rgba(245,158,11,0.5)',
                   }}
                 />
                 {/* Ambulance emoji riding the bar */}
                 <span style={{
                   position: 'absolute',
-                  top: '-4px',
-                  left: `calc(${Math.min(progress, 96)}% - 10px)`,
-                  fontSize: '18px',
-                  transition: 'left 1s ease',
-                  filter: 'drop-shadow(0 1px 2px rgba(0,0,0,0.3))',
+                  top: '-5px',
+                  left: `calc(${Math.min(progress, 94)}% - 12px)`,
+                  fontSize: '20px',
+                  transition: 'left 0.5s linear',
+                  filter: 'drop-shadow(0 1px 3px rgba(0,0,0,0.3))',
+                  pointerEvents: 'none',
                 }}>🚑</span>
               </div>
-              <div className="flex justify-between text-[10px] font-bold" style={{ color: '#92400e' }}>
+              <div className="flex justify-between text-[10px] font-bold mt-1" style={{ color: '#92400e' }}>
                 <span>🏥 Hospital</span>
-                <span>{progress}% of route covered</span>
+                <span>{progress}% covered · {distance.toFixed(1)} km remaining</span>
                 <span>📍 You</span>
               </div>
             </div>
@@ -202,6 +202,7 @@ const Emergency = () => {
 
             <button
               onClick={toggleAlert}
+              disabled={isButtonDisabled && !isActive}
               className="rounded-full flex items-center justify-center transition-all cursor-pointer focus:outline-none shrink-0"
               style={{
                 width: '120px', height: '120px',
@@ -211,6 +212,8 @@ const Emergency = () => {
                 boxShadow: isActive
                   ? 'inset 0 8px 16px rgba(0,0,0,0.1)'
                   : '0 16px 40px rgba(239,68,68,0.5)',
+                opacity: isButtonDisabled && !isActive ? 0.5 : 1,
+                cursor: isButtonDisabled && !isActive ? 'not-allowed' : 'pointer',
               }}>
               {isActive
                 ? <X size={56} strokeWidth={2.5} />
