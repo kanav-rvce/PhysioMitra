@@ -16,34 +16,74 @@ const injectPulseCSS = () => {
   const style = document.createElement('style');
   style.id = 'emergency-map-styles';
   style.textContent = `
-    @keyframes userPulse {
-      0%   { transform: scale(1);   opacity: 0.8; }
-      50%  { transform: scale(2.2); opacity: 0;   }
-      100% { transform: scale(1);   opacity: 0;   }
+    /* ── Leaflet icon overflow fix ── */
+    .leaflet-marker-icon { overflow: visible !important; }
+
+    /* ── User location pulse ── */
+    @keyframes userRingPulse {
+      0%   { transform: scale(0.5); opacity: 0.9; }
+      100% { transform: scale(3.2); opacity: 0;   }
     }
-    @keyframes ambulanceBounce {
-      0%, 100% { transform: translateY(0px); }
-      50%       { transform: translateY(-4px); }
+    .user-dot-wrap {
+      position: relative;
+      width: 20px;
+      height: 20px;
     }
-    .user-pulse-ring {
+    .user-dot {
       position: absolute;
       top: 50%; left: 50%;
-      width: 36px; height: 36px;
-      margin: -18px 0 0 -18px;
+      transform: translate(-50%, -50%);
+      width: 14px; height: 14px;
       border-radius: 50%;
-      background: rgba(239,68,68,0.4);
-      animation: userPulse 1.8s ease-out infinite;
+      background: #ef4444;
+      border: 2.5px solid white;
+      box-shadow: 0 2px 8px rgba(239,68,68,0.6);
+      z-index: 3;
+    }
+    .user-ring {
+      position: absolute;
+      top: 50%; left: 50%;
+      transform: translate(-50%, -50%) scale(0.5);
+      width: 20px; height: 20px;
+      border-radius: 50%;
+      background: rgba(239,68,68,0.45);
+      animation: userRingPulse 2s ease-out infinite;
       pointer-events: none;
     }
-    .user-pulse-ring-2 {
-      animation-delay: 0.6s;
+    .user-ring:nth-child(2) { animation-delay: 0.65s; }
+    .user-ring:nth-child(3) { animation-delay: 1.3s;  }
+
+    /* ── Ambulance blink + bounce ── */
+    @keyframes ambBlink {
+      0%, 49% { opacity: 1;   }
+      50%, 99% { opacity: 0.3; }
+      100%     { opacity: 1;   }
     }
-    .user-pulse-ring-3 {
-      animation-delay: 1.2s;
+    @keyframes ambBounce {
+      0%, 100% { transform: translateY(0);   }
+      50%      { transform: translateY(-5px); }
     }
-    .ambulance-icon {
-      animation: ambulanceBounce 1s ease-in-out infinite;
-      display: inline-block;
+    .amb-wrap {
+      position: relative;
+      width: 40px; height: 40px;
+      display: flex; align-items: center; justify-content: center;
+    }
+    .amb-emoji {
+      font-size: 26px;
+      line-height: 1;
+      display: block;
+      animation: ambBounce 0.9s ease-in-out infinite;
+      filter: drop-shadow(0 3px 6px rgba(0,0,0,0.45));
+    }
+    .amb-blink-ring {
+      position: absolute;
+      top: 50%; left: 50%;
+      transform: translate(-50%, -50%);
+      width: 38px; height: 38px;
+      border-radius: 50%;
+      border: 2.5px solid #fbbf24;
+      animation: ambBlink 1s step-end infinite;
+      pointer-events: none;
     }
   `;
   document.head.appendChild(style);
@@ -112,26 +152,20 @@ const EmergencyMap = ({
 
       // Pulsing rings only shown when emergency is active
       const pulseRings = isActive
-        ? `<div class="user-pulse-ring"></div>
-           <div class="user-pulse-ring user-pulse-ring-2"></div>
-           <div class="user-pulse-ring user-pulse-ring-3"></div>`
+        ? `<div class="user-ring"></div>
+           <div class="user-ring"></div>
+           <div class="user-ring"></div>`
         : '';
 
       const icon = L.divIcon({
         html: `
-          <div style="position:relative;width:18px;height:18px;">
+          <div class="user-dot-wrap">
             ${pulseRings}
-            <div style="
-              position:absolute;top:0;left:0;
-              width:18px;height:18px;border-radius:50%;
-              background:#ef4444;border:3px solid white;
-              box-shadow:0 2px 8px rgba(239,68,68,0.5);
-              z-index:2;
-            "></div>
+            <div class="user-dot"></div>
           </div>`,
         className: '',
-        iconSize: [18, 18],
-        iconAnchor: [9, 9],
+        iconSize: [20, 20],
+        iconAnchor: [10, 10],
       });
 
       userMarkerRef.current = L.marker([userLocation.lat, userLocation.lng], { icon, zIndexOffset: 1000 })
@@ -243,13 +277,14 @@ const EmergencyMap = ({
       } else {
         // Create marker for the first time
         const icon = L.divIcon({
-          html: `<div style="
-            font-size:28px;line-height:1;
-            filter:drop-shadow(0 3px 6px rgba(0,0,0,0.5));
-          "><span class="ambulance-icon">🚑</span></div>`,
+          html: `
+            <div class="amb-wrap">
+              <div class="amb-blink-ring"></div>
+              <span class="amb-emoji">🚑</span>
+            </div>`,
           className: '',
-          iconSize: [32, 32],
-          iconAnchor: [16, 16],
+          iconSize: [40, 40],
+          iconAnchor: [20, 20],
         });
 
         ambulanceMarkerRef.current = L.marker(
