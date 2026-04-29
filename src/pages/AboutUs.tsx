@@ -9,6 +9,7 @@ const team = [
     photo: '/kanav.jpg',
     color: '#0EA5E9',
     roleIcon: Brain,
+    linkedin: 'https://www.linkedin.com/in/kanav1310/',
   },
   {
     name: 'Aarav Jagga',
@@ -17,6 +18,7 @@ const team = [
     photo: '/aarav.jpg',
     color: '#10B981',
     roleIcon: Cpu,
+    linkedin: 'https://www.linkedin.com/in/aarav-jagga-955135319/',
   },
   {
     name: 'Pratham',
@@ -25,6 +27,7 @@ const team = [
     photo: '/pratham.jpg',
     color: '#8B5CF6',
     roleIcon: Shield,
+    linkedin: null,
   },
 ];
 
@@ -177,7 +180,9 @@ const AboutUs = () => {
                 }}
               >
                 {/* Square bordered image - no stretch */}
-                <div style={{
+                <div
+                  onClick={() => member.linkedin && window.open(member.linkedin, '_blank', 'noopener,noreferrer')}
+                  style={{
                   width: '160px',
                   height: '160px',
                   borderRadius: '12px',
@@ -190,6 +195,7 @@ const AboutUs = () => {
                   transition: 'all 0.3s ease',
                   boxShadow: isHovered ? `0 0 0 4px ${member.color}15` : 'none',
                   flexShrink: 0,
+                  cursor: member.linkedin ? 'pointer' : 'default',
                 }}>
                   {member.photo
                     ? <img src={member.photo} alt={member.name} style={{ width: '100%', height: '100%', objectFit: 'cover', objectPosition: 'center' }} />

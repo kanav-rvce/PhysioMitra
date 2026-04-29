@@ -392,6 +392,29 @@ export const conditions: Condition[] = [
       nausea: 0.5,
       chest_pain: 0.4,
       difficulty_swallowing: 0.3,
+      excess_burping: 0.7,
+      bloating: 0.4,
+      abdominal_pain: 0.35,
+      vomiting: 0.3,
+    },
+  },
+  {
+    label: 'Irritable Bowel Syndrome',
+    description: 'Chronic digestive disorder with abdominal pain and altered bowel habits',
+    specialist: 'Gastroenterologist',
+    isPhysioRelevant: false,
+    color: '#f59e0b',
+    prior: 0.07,
+    likelihoods: {
+      abdominal_pain: 0.85,
+      bloating: 0.82,
+      diarrhea: 0.75,
+      constipation: 0.65,
+      nausea: 0.45,
+      vomiting: 0.25,
+      excess_burping: 0.4,
+      indigestion: 0.4,
+      fatigue: 0.35,
     },
   },
   {
@@ -462,6 +485,83 @@ export const conditions: Condition[] = [
       runny_nose: 0.85,
       cough: 0.5,
       sore_throat: 0.4,
+      fever: 0.3,
+      fatigue: 0.3,
+    },
+  },
+  {
+    label: 'Viral Infection / Flu',
+    description: 'Acute viral illness with fever, fatigue and respiratory symptoms',
+    specialist: 'General Practitioner',
+    isPhysioRelevant: false,
+    color: '#64748b',
+    prior: 0.1,
+    likelihoods: {
+      fever: 0.9,
+      fatigue: 0.8,
+      sore_throat: 0.7,
+      cough: 0.7,
+      headache: 0.6,
+      muscle_stiffness: 0.5,
+      nausea: 0.4,
+      vomiting: 0.35,
+      runny_nose: 0.6,
+      loss_of_appetite: 0.5,
+      dizziness: 0.3,
+      skin_rash: 0.2,
+      diarrhea: 0.3,
+      constipation: 0.1,
+    },
+  },
+  {
+    label: 'Depression',
+    description: 'Persistent low mood affecting daily functioning and energy',
+    specialist: 'Psychiatrist',
+    isPhysioRelevant: false,
+    color: '#8b5cf6',
+    prior: 0.06,
+    likelihoods: {
+      depression: 0.95,
+      fatigue: 0.75,
+      insomnia: 0.65,
+      lack_of_energy: 0.8,
+      mood_swings: 0.6,
+      loss_of_appetite: 0.5,
+      weight_loss: 0.3,
+      anxiety: 0.4,
+    },
+  },
+  {
+    label: 'Cardiac Arrhythmia',
+    description: 'Irregular heart rhythm causing palpitations and discomfort',
+    specialist: 'Cardiologist',
+    isPhysioRelevant: false,
+    color: '#ef4444',
+    prior: 0.05,
+    likelihoods: {
+      irregular_heartbeat: 0.9,
+      palpitations: 0.85,
+      chest_tightness: 0.5,
+      dizziness: 0.45,
+      shortness_of_breath: 0.4,
+      fatigue: 0.35,
+      fainting: 0.3,
+    },
+  },
+  {
+    label: 'Allergic Reaction / Dermatitis',
+    description: 'Allergic skin reaction causing rash, itching and inflammation',
+    specialist: 'Dermatologist / Allergist',
+    isPhysioRelevant: false,
+    color: '#ec4899',
+    prior: 0.06,
+    likelihoods: {
+      skin_rash: 0.9,
+      dry_skin: 0.5,
+      fever: 0.2,
+      fatigue: 0.2,
+      runny_nose: 0.3,
+      dry_eyes: 0.3,
     },
   },
 ];
@@ -1211,32 +1311,45 @@ export function runBayesianDiagnosis(selectedSymptomIds: string[]): DiagnosisRes
     return [];
   }
 
-  const results = conditions.map(condition => {
-    let likelihood = condition.prior;
-    
+  // Use log-space to prevent underflow when multiplying many small probabilities
+  const scored = conditions.map(condition => {
+    let logScore = Math.log(condition.prior);
     for (const symptomId of selectedSymptomIds) {
-      const symptomLikelihood = condition.likelihoods[symptomId] || 0.1;
-      likelihood *= symptomLikelihood;
+      const likelihood = condition.likelihoods[symptomId] || 0.05;
+      logScore += Math.log(Math.max(0.001, likelihood));
     }
-    
     return {
       condition: condition.label,
       description: condition.description,
       specialist: condition.specialist,
       isPhysioRelevant: condition.isPhysioRelevant,
-      probability: likelihood,
       color: condition.color || '#6366f1',
+      logScore,
     };
   });
 
-  return results
-    .sort((a, b) => b.probability - a.probability)
-    .slice(0, 5)
-    .map((result, index) => ({
-      ...result,
-      rank: index + 1,
-      percentageProbability: Math.round(result.probability * 100),
-    }));
+  // Log-sum-exp for numerical stability
+  const maxLog = Math.max(...scored.map(s => s.logScore));
+  const withScores = scored.map(s => ({ ...s, score: Math.exp(s.logScore - maxLog) }));
+  const total = withScores.reduce((sum, s) => sum + s.score, 0);
+
+  // Take top 5, normalize to 100%
+  const top5 = withScores
+    .sort((a, b) => b.score - a.score)
+    .slice(0, 5);
+
+  const topTotal = top5.reduce((sum, s) => sum + s.score, 0);
+
+  return top5.map((result, index) => ({
+    condition: result.condition,
+    description: result.description,
+    specialist: result.specialist,
+    isPhysioRelevant: result.isPhysioRelevant,
+    probability: result.score / total,
+    color: result.color,
+    rank: index + 1,
+    percentageProbability: Math.max(1, Math.round((result.score / topTotal) * 100)),
+  }));
 }
 
 export function getSelfCareTips(selectedSymptomIds: string[]): CareTip[] {
