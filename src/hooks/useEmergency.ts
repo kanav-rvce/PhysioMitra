@@ -62,20 +62,68 @@ const initialState: EmergencyState = {
   messageSent: false,
 };
 
-// Build a dense path of N interpolated points from hospital → user
+// Build a realistic curved path using Catmull-Rom spline with road-like waypoints
 const buildPath = (
   from: { lat: number; lng: number },
   to: { lat: number; lng: number },
-  steps: number = 30
+  steps: number = 80
 ): Array<{ lat: number; lng: number }> => {
-  const path: Array<{ lat: number; lng: number }> = [];
-  for (let i = 0; i <= steps; i++) {
-    const t = i / steps;
-    path.push({
-      lat: from.lat + (to.lat - from.lat) * t,
-      lng: from.lng + (to.lng - from.lng) * t,
+  // Generate 3-5 intermediate control points that simulate road turns
+  const numControlPoints = 3 + Math.floor(Math.random() * 3);
+  const controlPoints: Array<{ lat: number; lng: number }> = [from];
+
+  const dLat = to.lat - from.lat;
+  const dLng = to.lng - from.lng;
+  const dist = Math.sqrt(dLat * dLat + dLng * dLng);
+
+  // Perpendicular direction for offsets
+  const perpLat = -dLng / dist;
+  const perpLng = dLat / dist;
+
+  for (let i = 1; i <= numControlPoints; i++) {
+    const t = i / (numControlPoints + 1);
+    // Offset magnitude scales with distance, simulates road curves
+    const offsetMag = dist * (0.08 + Math.random() * 0.12) * (Math.random() > 0.5 ? 1 : -1);
+    controlPoints.push({
+      lat: from.lat + dLat * t + perpLat * offsetMag,
+      lng: from.lng + dLng * t + perpLng * offsetMag,
     });
   }
+  controlPoints.push(to);
+
+  // Catmull-Rom spline through control points
+  const path: Array<{ lat: number; lng: number }> = [];
+  const n = controlPoints.length;
+
+  for (let seg = 0; seg < n - 1; seg++) {
+    const p0 = controlPoints[Math.max(seg - 1, 0)];
+    const p1 = controlPoints[seg];
+    const p2 = controlPoints[seg + 1];
+    const p3 = controlPoints[Math.min(seg + 2, n - 1)];
+
+    const segSteps = Math.ceil(steps / (n - 1));
+    for (let i = 0; i < segSteps; i++) {
+      const t = i / segSteps;
+      const t2 = t * t;
+      const t3 = t2 * t;
+
+      // Catmull-Rom formula
+      const lat = 0.5 * (
+        (2 * p1.lat) +
+        (-p0.lat + p2.lat) * t +
+        (2 * p0.lat - 5 * p1.lat + 4 * p2.lat - p3.lat) * t2 +
+        (-p0.lat + 3 * p1.lat - 3 * p2.lat + p3.lat) * t3
+      );
+      const lng = 0.5 * (
+        (2 * p1.lng) +
+        (-p0.lng + p2.lng) * t +
+        (2 * p0.lng - 5 * p1.lng + 4 * p2.lng - p3.lng) * t2 +
+        (-p0.lng + 3 * p1.lng - 3 * p2.lng + p3.lng) * t3
+      );
+      path.push({ lat, lng });
+    }
+  }
+  path.push(to);
   return path;
 };
 
@@ -94,6 +142,8 @@ export const useEmergency = () => {
   // Locked hospital — set once, never changed during active emergency
   const lockedHospitalRef = useRef<Hospital | null>(null);
   const isActiveRef = useRef(false);
+  // Locked path — built once at T+8s, reused at T+25s for ambulance movement
+  const lockedPathRef = useRef<Array<{ lat: number; lng: number }>>([]);
 
   const clearAllTimers = useCallback(() => {
     if (intervalRef.current) {
@@ -175,8 +225,9 @@ export const useEmergency = () => {
         best.location.lat, best.location.lng
       );
 
-      // Build dense route path (hospital → user, 30 steps)
-      const path = buildPath(best.location, userLocation, 30);
+      // Build dense curved route path (hospital → user, 80 steps) — store in ref
+      const path = buildPath(best.location, userLocation, 80);
+      lockedPathRef.current = path;
 
       setState(prev => ({
         ...prev,
@@ -210,7 +261,11 @@ export const useEmergency = () => {
       const hospital = lockedHospitalRef.current;
       if (!hospital) return;
 
-      const path = buildPath(hospital.location, userLocation, 30);
+      // Reuse the SAME path built at T+8s — ambulance follows the exact drawn route
+      const path = lockedPathRef.current.length > 0
+        ? lockedPathRef.current
+        : buildPath(hospital.location, userLocation, 80);
+
       const dist = calculateDistance(
         userLocation.lat, userLocation.lng,
         hospital.location.lat, hospital.location.lng
@@ -296,6 +351,7 @@ export const useEmergency = () => {
     clearAllTimers();
     isActiveRef.current = false;
     lockedHospitalRef.current = null;
+    lockedPathRef.current = [];
     setState(prev => ({
       ...initialState,
       logs: prev.logs.length > 0

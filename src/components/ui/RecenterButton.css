@@ -1,0 +1,73 @@
+/**
+ * RecenterButton styles
+ * Floating button with absolute positioning, z-index, border-radius
+ * Includes hover and active states
+ */
+
+.recenter-button {
+  position: absolute;
+  z-index: 1000;
+  width: 40px;
+  height: 40px;
+  border-radius: 8px;
+  background-color: white;
+  border: 2px solid #e5e7eb;
+  cursor: pointer;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  box-shadow: 0 2px 8px rgba(0, 0, 0, 0.15);
+  transition: all 0.2s ease;
+  color: #374151;
+}
+
+/* Hover state */
+.recenter-button:hover {
+  background-color: #f9fafb;
+  border-color: #d1d5db;
+  box-shadow: 0 4px 12px rgba(0, 0, 0, 0.2);
+  transform: translateY(-1px);
+}
+
+/* Active state */
+.recenter-button:active {
+  background-color: #f3f4f6;
+  box-shadow: 0 1px 4px rgba(0, 0, 0, 0.15);
+  transform: translateY(0);
+}
+
+/* Centered state - visual feedback */
+.recenter-button[data-centered="true"] {
+  background-color: #3b82f6;
+  border-color: #2563eb;
+  color: white;
+}
+
+.recenter-button[data-centered="true"]:hover {
+  background-color: #2563eb;
+  border-color: #1d4ed8;
+}
+
+.recenter-button[data-centered="true"]:active {
+  background-color: #1e40af;
+}
+
+/* Focus state for accessibility */
+.recenter-button:focus {
+  outline: none;
+  box-shadow: 0 0 0 3px rgba(59, 130, 246, 0.3);
+}
+
+/* Disabled state */
+.recenter-button:disabled {
+  opacity: 0.5;
+  cursor: not-allowed;
+  background-color: #f3f4f6;
+  border-color: #e5e7eb;
+  color: #9ca3af;
+}
+
+.recenter-button:disabled:hover {
+  transform: none;
+  box-shadow: 0 2px 8px rgba(0, 0, 0, 0.15);
+}

@@ -1,4 +1,4 @@
-import { useEffect, useRef } from 'react';
+import { useEffect, useRef, useState, useCallback } from 'react';
 import type { Hospital } from '../services/hospitalService';
 
 interface EmergencyMapProps {
@@ -27,17 +27,17 @@ const injectPulseCSS = () => {
     }
     .user-dot-wrap {
       position: relative;
-      width: 20px;
-      height: 20px;
+      width: 28px;
+      height: 28px;
     }
     .user-dot {
       position: absolute;
       top: 50%; left: 50%;
       transform: translate(-50%, -50%);
-      width: 14px; height: 14px;
+      width: 20px; height: 20px;
       border-radius: 50%;
       background: #ef4444;
-      border: 2.5px solid white;
+      border: 3px solid white;
       box-shadow: 0 2px 8px rgba(239,68,68,0.6);
       z-index: 3;
     }
@@ -45,7 +45,7 @@ const injectPulseCSS = () => {
       position: absolute;
       top: 50%; left: 50%;
       transform: translate(-50%, -50%) scale(0.5);
-      width: 20px; height: 20px;
+      width: 28px; height: 28px;
       border-radius: 50%;
       background: rgba(239,68,68,0.45);
       animation: userRingPulse 2s ease-out infinite;
@@ -111,8 +111,61 @@ const EmergencyMap = ({
   // eslint-disable-next-line @typescript-eslint/no-explicit-any
   const userMarkerRef = useRef<any>(null);
 
+  // State for tracking if map is centered on user location
+  const [isCentered, setIsCentered] = useState(true);
+
   // Inject CSS once
   useEffect(() => { injectPulseCSS(); }, []);
+
+  // Calculate if map is centered on user location (within tolerance)
+  const checkIfCentered = useCallback(() => {
+    if (!mapInstanceRef.current || !userLocation) {
+      return false;
+    }
+    
+    const center = mapInstanceRef.current.getCenter();
+    const tolerance = 0.001; // ~100 meters tolerance
+    
+    const latDiff = Math.abs(center.lat - userLocation.lat);
+    const lngDiff = Math.abs(center.lng - userLocation.lng);
+    
+    return latDiff < tolerance && lngDiff < tolerance;
+  }, [userLocation]);
+
+  // Recenter map to user location with smooth animation
+  const recenterToUserLocation = useCallback(() => {
+    if (!mapInstanceRef.current || !userLocation) return;
+    
+    // Use smooth animation when centering map view
+    mapInstanceRef.current.setView(
+      [userLocation.lat, userLocation.lng],
+      14,
+      { animate: true, duration: 0.5 }
+    );
+    
+    // Update isCentered state after recentering animation completes
+    // The moveend event will fire when animation finishes and update the state
+  }, [userLocation]);
+
+  // Alias for backward compatibility and button handler
+  const handleRecenter = recenterToUserLocation;
+
+  // Update isCentered state when map moves
+  useEffect(() => {
+    if (!mapInstanceRef.current) return;
+
+    const handleMoveEnd = () => {
+      setIsCentered(checkIfCentered());
+    };
+
+    mapInstanceRef.current.on('moveend', handleMoveEnd);
+
+    return () => {
+      if (mapInstanceRef.current) {
+        mapInstanceRef.current.off('moveend', handleMoveEnd);
+      }
+    };
+  }, [checkIfCentered]);
 
   // ── Init Leaflet map once ──────────────────────────────────────────────────
   useEffect(() => {
@@ -123,7 +176,7 @@ const EmergencyMap = ({
         ? [userLocation.lat, userLocation.lng]
         : [20.5937, 78.9629];
 
-      const map = L.map(mapRef.current!, { center, zoom: 13, zoomControl: true });
+      const map = L.map(mapRef.current!, { center, zoom: 13, zoomControl: false });
 
       L.tileLayer('https://{s}.tile.openstreetmap.org/{z}/{x}/{y}.png', {
         attribution: '© <a href="https://www.openstreetmap.org/copyright">OpenStreetMap</a>',
@@ -148,35 +201,60 @@ const EmergencyMap = ({
 
     import('leaflet').then(L => {
       if (userMarkerRef.current) {
-        userMarkerRef.current.remove();
-        userMarkerRef.current = null;
+        // Update marker position without recentering the map (Requirement 1.5)
+        userMarkerRef.current.setLatLng([userLocation.lat, userLocation.lng]);
+        
+        // Update the icon to reflect active state
+        const pulseRings = isActive
+          ? `<div class="user-ring"></div>
+             <div class="user-ring"></div>
+             <div class="user-ring"></div>`
+          : '';
+
+        const icon = L.divIcon({
+          html: `
+            <div class="user-dot-wrap">
+              ${pulseRings}
+              <div class="user-dot"></div>
+            </div>`,
+          className: '',
+          iconSize: [28, 28],
+          iconAnchor: [14, 14],
+        });
+        
+        userMarkerRef.current.setIcon(icon);
+      } else {
+        // Create marker for the first time and center on it
+        const pulseRings = isActive
+          ? `<div class="user-ring"></div>
+             <div class="user-ring"></div>
+             <div class="user-ring"></div>`
+          : '';
+
+        const icon = L.divIcon({
+          html: `
+            <div class="user-dot-wrap">
+              ${pulseRings}
+              <div class="user-dot"></div>
+            </div>`,
+          className: '',
+          iconSize: [28, 28],
+          iconAnchor: [14, 14],
+        });
+
+        userMarkerRef.current = L.marker([userLocation.lat, userLocation.lng], { icon, zIndexOffset: 1000 })
+          .addTo(mapInstanceRef.current)
+          .bindPopup('<b>📍 Your Location</b>');
+
+        // Only center on initial marker creation
+        mapInstanceRef.current.setView([userLocation.lat, userLocation.lng], 14);
+        setIsCentered(true);
       }
-
-      // Pulsing rings only shown when emergency is active
-      const pulseRings = isActive
-        ? `<div class="user-ring"></div>
-           <div class="user-ring"></div>
-           <div class="user-ring"></div>`
-        : '';
-
-      const icon = L.divIcon({
-        html: `
-          <div class="user-dot-wrap">
-            ${pulseRings}
-            <div class="user-dot"></div>
-          </div>`,
-        className: '',
-        iconSize: [20, 20],
-        iconAnchor: [10, 10],
-      });
-
-      userMarkerRef.current = L.marker([userLocation.lat, userLocation.lng], { icon, zIndexOffset: 1000 })
-        .addTo(mapInstanceRef.current)
-        .bindPopup('<b>📍 Your Location</b>');
-
-      mapInstanceRef.current.setView([userLocation.lat, userLocation.lng], 14);
+      
+      // Update centered state after location change
+      setIsCentered(checkIfCentered());
     });
-  }, [userLocation, isActive]);
+  }, [userLocation, isActive, checkIfCentered]);
 
   // ── Hospital markers ───────────────────────────────────────────────────────
   useEffect(() => {
@@ -190,7 +268,7 @@ const EmergencyMap = ({
         const isSelected = selectedHospital?.id === hospital.id;
         const color = hospital.color === 'green' ? '#10b981'
           : hospital.color === 'yellow' ? '#f59e0b' : '#ef4444';
-        const size = isSelected ? 34 : 22;
+        const size = isSelected ? 44 : 32;
 
         const icon = L.divIcon({
           html: `<div style="
@@ -201,7 +279,7 @@ const EmergencyMap = ({
               ? `0 0 0 4px ${color}55, 0 4px 12px rgba(0,0,0,0.3)`
               : '0 1px 4px rgba(0,0,0,0.2)'};
             display:flex;align-items:center;justify-content:center;
-            font-size:${isSelected ? '16px' : '12px'};
+            font-size:${isSelected ? '20px' : '16px'};
           ">🏥</div>`,
           className: '',
           iconSize: [size, size],
@@ -247,23 +325,21 @@ const EmergencyMap = ({
       if (route && route.length >= 2) {
         const latlngs = route.map(p => [p.lat, p.lng] as [number, number]);
 
-        // Solid background line
-        L.polyline(latlngs, { color: '#0369a1', weight: 7, opacity: 0.3 })
+        // Route is already curved (Catmull-Rom spline from useEmergency)
+        // Background shadow line
+        L.polyline(latlngs, { color: '#0369a1', weight: 8, opacity: 0.25 })
           .addTo(mapInstanceRef.current);
 
-        // Dashed animated route line
+        // Main dashed route line
         routeLayerRef.current = L.polyline(latlngs, {
           color: '#0EA5E9',
           weight: 5,
-          dashArray: '12, 8',
+          dashArray: '14, 8',
           opacity: 1,
         }).addTo(mapInstanceRef.current);
 
         // Fit bounds to show full route
-        const points: [number, number][] = latlngs;
-        if (points.length >= 2) {
-          mapInstanceRef.current.fitBounds(L.latLngBounds(points), { padding: [60, 60] });
-        }
+        mapInstanceRef.current.fitBounds(L.latLngBounds(latlngs), { padding: [60, 60] });
       }
     });
   }, [route, userLocation, selectedHospital]);
@@ -314,7 +390,75 @@ const EmergencyMap = ({
   }, [isActive]);
 
   return (
-    <div ref={mapRef} style={{ width: '100%', height: '100%', borderRadius: 'inherit' }} />
+    <div style={{ position: 'relative', width: '100%', height: '100%', borderRadius: 'inherit' }}>
+      <div ref={mapRef} style={{ width: '100%', height: '100%', borderRadius: 'inherit' }} />
+
+      {/* Custom map controls — top left */}
+      <div style={{
+        position: 'absolute', top: '12px', left: '12px', zIndex: 1000,
+        display: 'flex', flexDirection: 'column', gap: '4px',
+      }}>
+        {/* Zoom In */}
+        <button
+          onClick={() => mapInstanceRef.current?.zoomIn()}
+          title="Zoom in"
+          style={{
+            width: '36px', height: '36px', borderRadius: '10px',
+            background: 'rgba(15,23,42,0.85)', backdropFilter: 'blur(8px)',
+            border: '1px solid rgba(255,255,255,0.15)', color: 'white',
+            fontSize: '20px', fontWeight: 700, lineHeight: 1,
+            display: 'flex', alignItems: 'center', justifyContent: 'center',
+            cursor: 'pointer', boxShadow: '0 2px 8px rgba(0,0,0,0.4)',
+            transition: 'all 0.15s ease',
+          }}
+          onMouseEnter={e => (e.currentTarget.style.background = 'rgba(14,165,233,0.85)')}
+          onMouseLeave={e => (e.currentTarget.style.background = 'rgba(15,23,42,0.85)')}
+        >+</button>
+
+        {/* Zoom Out */}
+        <button
+          onClick={() => mapInstanceRef.current?.zoomOut()}
+          title="Zoom out"
+          style={{
+            width: '36px', height: '36px', borderRadius: '10px',
+            background: 'rgba(15,23,42,0.85)', backdropFilter: 'blur(8px)',
+            border: '1px solid rgba(255,255,255,0.15)', color: 'white',
+            fontSize: '22px', fontWeight: 700, lineHeight: 1,
+            display: 'flex', alignItems: 'center', justifyContent: 'center',
+            cursor: 'pointer', boxShadow: '0 2px 8px rgba(0,0,0,0.4)',
+            transition: 'all 0.15s ease',
+          }}
+          onMouseEnter={e => (e.currentTarget.style.background = 'rgba(14,165,233,0.85)')}
+          onMouseLeave={e => (e.currentTarget.style.background = 'rgba(15,23,42,0.85)')}
+        >−</button>
+
+        {/* Recenter */}
+        {userLocation && (
+          <button
+            onClick={handleRecenter}
+            title={isCentered ? 'Centered' : 'Recenter to your location'}
+            style={{
+              width: '36px', height: '36px', borderRadius: '10px',
+              background: isCentered ? 'rgba(14,165,233,0.9)' : 'rgba(15,23,42,0.85)',
+              backdropFilter: 'blur(8px)',
+              border: `1px solid ${isCentered ? 'rgba(14,165,233,0.6)' : 'rgba(255,255,255,0.15)'}`,
+              color: 'white',
+              display: 'flex', alignItems: 'center', justifyContent: 'center',
+              cursor: 'pointer', boxShadow: '0 2px 8px rgba(0,0,0,0.4)',
+              transition: 'all 0.15s ease',
+              marginTop: '4px',
+            }}
+            onMouseEnter={e => (e.currentTarget.style.background = 'rgba(14,165,233,0.9)')}
+            onMouseLeave={e => (e.currentTarget.style.background = isCentered ? 'rgba(14,165,233,0.9)' : 'rgba(15,23,42,0.85)')}
+          >
+            <svg width="18" height="18" viewBox="0 0 24 24" fill={isCentered ? 'white' : 'none'} stroke="white" strokeWidth="2.5">
+              <circle cx="12" cy="12" r="3" />
+              <path d="M12 2v4m0 12v4M2 12h4m12 0h4" strokeLinecap="round" />
+            </svg>
+          </button>
+        )}
+      </div>
+    </div>
   );
 };
 

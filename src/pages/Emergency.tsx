@@ -2,7 +2,7 @@ import { useRef, useEffect, useState } from 'react';
 import {
   AlertTriangle, Navigation, Ambulance, ShieldAlert, HeartPulse,
   Clock, Activity, Users, Send, X, Phone, MessageCircle, CheckCircle2,
-  MapPin, RefreshCw, ChevronRight,
+  MapPin, RefreshCw, ChevronRight, ChevronDown,
 } from 'lucide-react';
 import { useEmergency } from '../hooks/useEmergency';
 import { useNearbyHospitals } from '../hooks/useNearbyHospitals';
@@ -38,6 +38,7 @@ const Emergency = () => {
 
   const logsEndRef = useRef<HTMLDivElement>(null);
   const [mapTarget, setMapTarget] = useState<{ lat: number; lng: number } | null>(null);
+  const [showNearby, setShowNearby] = useState(false);
 
   useEffect(() => {
     logsEndRef.current?.scrollIntoView({ behavior: 'smooth' });
@@ -60,10 +61,10 @@ const Emergency = () => {
   const activeStepIndex = STATUS_STEPS.findIndex(s => s.key === status);
 
   return (
-    <div style={{ animation: 'fadeIn 0.4s ease-out' }} className="flex flex-col gap-8 pt-2 pb-8">
+    <div style={{ animation: 'fadeIn 0.4s ease-out', display: 'flex', flexDirection: 'column', gap: '2.5rem', paddingTop: '0.5rem', paddingBottom: '2rem' }}>
 
       {/* ── Header ── */}
-      <div className="flex justify-between items-center">
+      <div className="flex justify-between items-center" style={{ marginBottom: '8px' }}>
         <div>
           <h1 className="text-danger font-black text-3xl uppercase tracking-tighter flex items-center gap-3">
             <AlertTriangle size={32} strokeWidth={3} /> Emergency Response
@@ -93,14 +94,14 @@ const Emergency = () => {
                   <div
                     className="w-8 h-8 rounded-full flex items-center justify-center text-sm font-black transition-all duration-500"
                     style={{
-                      background: isDone ? '#10b981' : isCurrent ? 'var(--danger)' : 'var(--background)',
-                      border: `2px solid ${isDone ? '#10b981' : isCurrent ? 'var(--danger)' : 'var(--border)'}`,
-                      boxShadow: isCurrent ? '0 0 0 3px rgba(239,68,68,0.2)' : 'none',
+                      background: isDone ? '#10b981' : isCurrent && status === 'arrived' ? '#10b981' : isCurrent ? 'var(--danger)' : 'var(--background)',
+                      border: `2px solid ${isDone ? '#10b981' : isCurrent && status === 'arrived' ? '#10b981' : isCurrent ? 'var(--danger)' : 'var(--border)'}`,
+                      boxShadow: isCurrent && status !== 'arrived' ? '0 0 0 3px rgba(239,68,68,0.2)' : isCurrent && status === 'arrived' ? '0 0 0 3px rgba(16,185,129,0.2)' : 'none',
                     }}>
-                    {isDone ? '✓' : step.icon}
+                    {isDone || (isCurrent && status === 'arrived') ? '✓' : step.icon}
                   </div>
                   <span className="text-[9px] font-bold text-center max-w-[60px] leading-tight"
-                    style={{ color: isCurrent ? 'var(--danger)' : isDone ? '#10b981' : 'var(--text-muted)' }}>
+                    style={{ color: isCurrent && status === 'arrived' ? '#10b981' : isCurrent ? 'var(--danger)' : isDone ? '#10b981' : 'var(--text-muted)' }}>
                     {step.label}
                   </span>
                 </div>
@@ -115,10 +116,10 @@ const Emergency = () => {
       </div>
 
       {/* ── Main grid ── */}
-      <div className="grid grid-cols-1 lg:grid-cols-3 gap-8">
+      <div className="grid grid-cols-1 lg:grid-cols-3" style={{ gap: '2.5rem' }}>
 
         {/* LEFT: Map + controls */}
-        <div className="lg:col-span-2 flex flex-col gap-6">
+        <div className="lg:col-span-2 flex flex-col" style={{ gap: '2rem' }}>
 
           {/* Leaflet Map */}
           <div className="overflow-hidden border-4 border-slate-700 shadow-2xl bg-slate-900"
@@ -157,36 +158,6 @@ const Emergency = () => {
             </div>
           </div>
 
-          {/* Ambulance progress bar */}
-          {status === 'en-route' && (
-            <div className="card border-2 border-yellow-400/40 shadow-md p-4 flex flex-col gap-2"
-              style={{ background: '#fffbeb' }}>
-              <div className="flex items-center justify-between">
-                <div className="flex items-center gap-2">
-                  <span style={{ fontSize: '22px' }}>🚑</span>
-                  <span className="font-black text-sm" style={{ color: '#92400e' }}>Ambulance En Route</span>
-                </div>
-                <div className="flex items-center gap-2 px-3 py-1 rounded-xl"
-                  style={{ background: '#fef3c7', border: '1px solid #fcd34d' }}>
-                  <Clock size={14} className="text-yellow-600 animate-pulse" />
-                  <span className="font-black text-sm text-yellow-700">
-                    {eta > 60 ? `Arriving in ${Math.floor(eta / 60)}m ${eta % 60}s` : `Arriving in ${eta}s`}
-                  </span>
-                </div>
-              </div>
-              <div className="relative w-full h-5 bg-slate-200 rounded-full overflow-visible mt-1">
-                <div className="h-full rounded-full transition-all duration-500"
-                  style={{ width: `${progress}%`, background: 'linear-gradient(90deg,#f59e0b,#ef4444)', boxShadow: '0 0 8px rgba(245,158,11,0.5)' }} />
-                <span style={{ position: 'absolute', top: '-5px', left: `calc(${Math.min(progress, 94)}% - 12px)`, fontSize: '20px', transition: 'left 0.5s linear', filter: 'drop-shadow(0 1px 3px rgba(0,0,0,0.3))', pointerEvents: 'none' }}>🚑</span>
-              </div>
-              <div className="flex justify-between text-[10px] font-bold mt-1" style={{ color: '#92400e' }}>
-                <span>🏥 Hospital</span>
-                <span>{progress}% covered · {distance.toFixed(1)} km remaining</span>
-                <span>📍 You</span>
-              </div>
-            </div>
-          )}
-
           {/* Arrived banner */}
           {status === 'arrived' && (
             <div className="card border-2 border-green-400 p-4 flex items-center gap-3" style={{ background: '#f0fdf4' }}>
@@ -213,7 +184,7 @@ const Emergency = () => {
                   : status === 'fetching' ? '🔍 Fetching Nearby Hospitals...'
                   : status === 'selecting' ? '⚡ Selecting Best Hospital...'
                   : status === 'dispatched' ? '📤 Alert Sent — Awaiting Dispatch'
-                  : '🚑 Ambulance En Route'}
+                  : 'upda'}
               </h2>
               <p className="font-semibold mt-2 text-base" style={{ color: 'var(--text-muted)' }}>
                 {!isActive
@@ -248,142 +219,13 @@ const Emergency = () => {
               {isActive ? <X size={56} strokeWidth={2.5} /> : <HeartPulse size={56} strokeWidth={2} className="animate-pulse" />}
             </button>
           </div>
-
-          {/* ── Nearby Hospitals Section ── */}
-          <div className="flex flex-col gap-5 pt-2 border-t-2 border-border mt-2">
-            <div className="flex items-center justify-between">
-              <div>
-                <h2 className="font-black text-xl flex items-center gap-2" style={{ color: 'var(--text-main)' }}>
-                  <MapPin size={20} className="text-primary" /> Nearby Hospitals
-                </h2>
-                <p className="text-xs font-semibold mt-0.5" style={{ color: 'var(--text-muted)' }}>
-                  Browse hospitals near you without triggering an emergency
-                </p>
-              </div>
-              <button onClick={refetch}
-                className="flex items-center gap-1.5 px-3 py-1.5 rounded-xl text-xs font-bold transition-all"
-                style={{ background: 'var(--background)', border: '1px solid var(--border)', color: 'var(--text-muted)' }}>
-                <RefreshCw size={12} className={fetchStatus === 'searching' || fetchStatus === 'locating' ? 'animate-spin' : ''} />
-                Refresh
-              </button>
-            </div>
-
-            {/* Status indicator */}
-            <div className="flex items-center gap-2 px-3 py-2 rounded-xl text-xs font-bold"
-              style={{
-                background: fetchStatus === 'done' ? 'rgba(16,185,129,0.08)' : fetchStatus === 'error' ? 'rgba(239,68,68,0.08)' : 'rgba(14,165,233,0.08)',
-                border: `1px solid ${fetchStatus === 'done' ? 'rgba(16,185,129,0.2)' : fetchStatus === 'error' ? 'rgba(239,68,68,0.2)' : 'rgba(14,165,233,0.2)'}`,
-                color: fetchStatus === 'done' ? '#10b981' : fetchStatus === 'error' ? '#ef4444' : 'var(--primary)',
-              }}>
-              <span className={fetchStatus === 'searching' || fetchStatus === 'locating' ? 'animate-pulse' : ''}>
-                {fetchStatus === 'idle' ? '⏳ Ready to search'
-                  : fetchStatus === 'locating' ? '📡 Getting your location...'
-                  : fetchStatus === 'searching' ? '🔍 Searching nearby hospitals...'
-                  : fetchStatus === 'done' ? `✅ ${nearbyList.length} hospitals found nearby`
-                  : '❌ Could not fetch hospitals'}
-              </span>
-            </div>
-
-            {/* Hospital cards grid */}
-            {nearbyList.length > 0 && (
-              <div className="grid grid-cols-1 md:grid-cols-2 gap-5">
-                {nearbyList.map(h => {
-                  const c = capacityColor(h.color);
-                  const label = capacityLabel(h.color);
-                  const isEmergencySelected = selectedHospital?.id === h.id;
-                  return (
-                    <div key={h.id}
-                      className="card border shadow-sm flex flex-col gap-4 transition-all duration-200 p-5"
-                      style={{
-                        borderColor: isEmergencySelected ? c : 'var(--border)',
-                        boxShadow: isEmergencySelected ? `0 0 0 2px ${c}40` : undefined,
-                      }}>
-                      {/* Header row */}
-                      <div className="flex items-start justify-between gap-2">
-                        <div className="flex items-center gap-2.5">
-                          <div className="w-9 h-9 rounded-xl flex items-center justify-center text-lg shrink-0"
-                            style={{ background: `${c}18`, border: `1.5px solid ${c}40` }}>
-                            🏥
-                          </div>
-                          <div>
-                            <p className="font-extrabold text-sm leading-tight" style={{ color: 'var(--text-main)' }}>{h.name}</p>
-                            {h.distance !== undefined && (
-                              <p className="text-[11px] font-semibold mt-0.5 flex items-center gap-1" style={{ color: 'var(--text-muted)' }}>
-                                <Navigation size={10} /> {h.distance.toFixed(1)} km away
-                              </p>
-                            )}
-                          </div>
-                        </div>
-                        {/* Status tag */}
-                        <span className="text-[10px] font-black px-2 py-0.5 rounded-full shrink-0"
-                          style={{ background: `${c}18`, color: c, border: `1px solid ${c}40` }}>
-                          {label}
-                        </span>
-                      </div>
-
-                      {/* Load bar */}
-                      <div>
-                        <div className="flex justify-between items-center mb-1">
-                          <span className="text-[10px] font-bold flex items-center gap-1" style={{ color: 'var(--text-muted)' }}>
-                            <Users size={10} /> Capacity
-                          </span>
-                          <span className="text-[10px] font-black" style={{ color: c }}>{h.currentLoad}%</span>
-                        </div>
-                        <div className="w-full bg-slate-200 rounded-full h-2">
-                          <div className="h-2 rounded-full transition-all duration-700"
-                            style={{ width: `${h.currentLoad}%`, backgroundColor: c }} />
-                        </div>
-                      </div>
-
-                      {/* Info row */}
-                      <div className="flex items-center justify-between text-[10px] font-semibold" style={{ color: 'var(--text-muted)' }}>
-                        <span>🚑 {h.ambulances} ambulances</span>
-                        <span>📞 {h.contact}</span>
-                      </div>
-
-                      {/* Action buttons */}
-                      <div className="flex gap-2 pt-1 border-t border-border">
-                        <button
-                          onClick={() => setMapTarget(h.location)}
-                          className="flex-1 flex items-center justify-center gap-1.5 py-1.5 rounded-lg text-xs font-bold transition-all"
-                          style={{ background: 'var(--background)', border: '1px solid var(--border)', color: 'var(--text-main)' }}>
-                          <MapPin size={11} /> View on Map
-                        </button>
-                        <button
-                          onClick={toggleAlert}
-                          disabled={isActive}
-                          className="flex-1 flex items-center justify-center gap-1.5 py-1.5 rounded-lg text-xs font-bold transition-all"
-                          style={{
-                            background: isActive ? 'var(--background)' : 'var(--danger)',
-                            color: isActive ? 'var(--text-muted)' : 'white',
-                            border: isActive ? '1px solid var(--border)' : 'none',
-                            cursor: isActive ? 'not-allowed' : 'pointer',
-                            opacity: isActive ? 0.5 : 1,
-                          }}>
-                          <ChevronRight size={11} /> Select for Emergency
-                        </button>
-                      </div>
-                    </div>
-                  );
-                })}
-              </div>
-            )}
-
-            {/* Empty state */}
-            {fetchStatus === 'done' && nearbyList.length === 0 && (
-              <div className="text-center py-10 text-sm font-semibold" style={{ color: 'var(--text-muted)' }}>
-                <Ambulance size={32} className="mx-auto mb-2 opacity-30" />
-                No hospitals found in your area.
-              </div>
-            )}
-          </div>
         </div>
 
         {/* RIGHT: Hospital status + Logs */}
-        <div className="flex flex-col gap-6">
+        <div className="flex flex-col" style={{ gap: '2rem' }}>
 
           {/* Hospital load balancing */}
-          <div className="card border border-border shadow-sm flex flex-col gap-4">
+          <div className="card border border-border shadow-sm flex flex-col gap-4 p-6">
             <h3 className="text-xs font-black uppercase tracking-widest flex items-center gap-2" style={{ color: 'var(--text-muted)' }}>
               <Activity size={15} /> Hospital Load Balancing
             </h3>
@@ -413,36 +255,33 @@ const Emergency = () => {
                     <div className="h-2.5 rounded-full transition-all duration-700"
                       style={{ width: `${selectedHospital.currentLoad}%`, backgroundColor: capacityColor(selectedHospital.color) }} />
                   </div>
-                  <p className="text-[10px] font-semibold mt-1.5" style={{ color: 'var(--text-muted)' }}>
-                    {selectedHospital.ambulances} ambulances · {selectedHospital.specialties.slice(0, 2).join(', ')}
-                  </p>
-                </div>
-                <div>
-                  <p className="text-[10px] font-black uppercase tracking-widest mb-2" style={{ color: 'var(--text-muted)' }}>Nearby</p>
-                  <div className="flex flex-col gap-1.5" style={{ maxHeight: '130px', overflowY: 'auto' }}>
-                    {allHospitals.slice(0, 6).map(h => {
-                      const c = capacityColor(h.color);
-                      const isSel = selectedHospital.id === h.id;
-                      return (
-                        <div key={h.id} className="flex items-center justify-between px-2 py-1.5 rounded-lg"
-                          style={{ background: isSel ? `${c}15` : 'var(--background)', border: `1px solid ${isSel ? c + '40' : 'var(--border)'}` }}>
-                          <div className="flex items-center gap-2">
-                            <div className="w-2 h-2 rounded-full shrink-0" style={{ backgroundColor: c }} />
-                            <span className="text-[11px] font-semibold" style={{ color: 'var(--text-main)' }}>{h.name}</span>
-                          </div>
-                          <span className="text-[10px] font-bold" style={{ color: c }}>{h.currentLoad}%</span>
+                  {status === 'en-route' && (
+                    <div className="flex flex-col gap-2 mt-3 pt-3" style={{ borderTop: '1px solid var(--border)' }}>
+                      <div className="flex items-center justify-between">
+                        <div className="flex items-center gap-1.5">
+                          <span style={{ fontSize: '16px' }}>🚑</span>
+                          <span className="font-black text-xs" style={{ color: '#92400e' }}>Ambulance En Route</span>
                         </div>
-                      );
-                    })}
-                  </div>
-                </div>
-                <div className="flex gap-3 flex-wrap pt-1 border-t border-border">
-                  {[{ c: '#10b981', l: 'Available' }, { c: '#f59e0b', l: 'Moderate' }, { c: '#ef4444', l: 'High Load' }].map(item => (
-                    <div key={item.l} className="flex items-center gap-1 text-[10px] font-bold" style={{ color: 'var(--text-muted)' }}>
-                      <div className="w-2 h-2 rounded-full" style={{ backgroundColor: item.c }} />
-                      {item.l}
+                        <div className="flex items-center gap-1.5 px-2 py-1 rounded-lg"
+                          style={{ background: '#fef3c7', border: '1px solid #fcd34d' }}>
+                          <Clock size={12} className="text-yellow-600 animate-pulse" />
+                          <span className="font-black text-xs text-yellow-700">
+                            {eta > 60 ? `${Math.floor(eta / 60)}m ${eta % 60}s` : `${eta}s`}
+                          </span>
+                        </div>
+                      </div>
+                      <div className="relative w-full h-4 bg-slate-200 rounded-full overflow-visible">
+                        <div className="h-full rounded-full transition-all duration-500"
+                          style={{ width: `${progress}%`, background: 'linear-gradient(90deg,#f59e0b,#ef4444)', boxShadow: '0 0 6px rgba(245,158,11,0.5)' }} />
+                        <span style={{ position: 'absolute', top: '-4px', left: `calc(${Math.min(progress, 92)}% - 10px)`, fontSize: '16px', transition: 'left 0.5s linear', pointerEvents: 'none' }}>🚑</span>
+                      </div>
+                      <div className="flex justify-between text-[9px] font-bold" style={{ color: '#92400e' }}>
+                        <span>🏥 Hospital</span>
+                        <span>{progress}% · {distance.toFixed(1)} km left</span>
+                        <span>📍 You</span>
+                      </div>
                     </div>
-                  ))}
+                  )}
                 </div>
               </>
             ) : (
@@ -454,7 +293,7 @@ const Emergency = () => {
           </div>
 
           {/* Live Operational Logs */}
-          <div className="card border border-border shadow-sm flex flex-col">
+          <div className="card border border-border shadow-sm flex flex-col p-6">
             <h3 className="text-xs font-black uppercase tracking-widest flex items-center gap-2 mb-3" style={{ color: 'var(--text-muted)' }}>
               <Send size={14} /> Live Operational Logs
             </h3>
@@ -474,6 +313,110 @@ const Emergency = () => {
               )}
               <div ref={logsEndRef} />
             </div>
+          </div>
+
+          {/* Nearby Hospitals — dropdown card */}
+          <div className="card border border-border shadow-sm p-5">
+            <div className="flex items-center justify-between">
+              <button
+                onClick={() => setShowNearby(v => !v)}
+                className="flex items-center gap-2 flex-1 text-left"
+                style={{ background: 'none', border: 'none', padding: 0, cursor: 'pointer' }}
+              >
+                <h3 className="text-xs font-black uppercase tracking-widest flex items-center gap-2" style={{ color: 'var(--text-muted)' }}>
+                  <MapPin size={14} /> Nearby Hospitals
+                </h3>
+                <ChevronDown
+                  size={16}
+                  style={{
+                    color: 'var(--text-muted)',
+                    transform: showNearby ? 'rotate(180deg)' : 'rotate(0deg)',
+                    transition: 'transform 0.2s',
+                    flexShrink: 0,
+                  }}
+                />
+              </button>
+              <button onClick={refetch}
+                className="flex items-center gap-1 px-2 py-1 rounded-lg text-[10px] font-bold ml-2"
+                style={{ background: 'var(--background)', border: '1px solid var(--border)', color: 'var(--text-muted)' }}>
+                <RefreshCw size={10} className={fetchStatus === 'searching' || fetchStatus === 'locating' ? 'animate-spin' : ''} />
+                Refresh
+              </button>
+            </div>
+
+            {showNearby && (
+              <div className="flex flex-col gap-3 mt-4" style={{ paddingTop: '6px' }}>
+                {nearbyList.length === 0 && fetchStatus === 'done' && (
+                  <p className="text-xs text-center py-4" style={{ color: 'var(--text-muted)' }}>No hospitals found nearby.</p>
+                )}
+                {nearbyList.map(h => {
+                  const c = capacityColor(h.color);
+                  const label = capacityLabel(h.color);
+                  const isEmergencySelected = selectedHospital?.id === h.id;
+                  return (
+                    <div key={h.id}
+                      style={{
+                        position: 'relative',
+                        border: `1px solid ${isEmergencySelected ? c : 'var(--border)'}`,
+                        borderRadius: '12px',
+                        padding: '10px 12px',
+                        background: 'var(--surface)',
+                      }}>
+                      {/* Status badge — top right corner */}
+                      <span style={{
+                        position: 'absolute', top: '-9px', right: '10px',
+                        fontSize: '9px', fontWeight: 800,
+                        padding: '2px 8px', borderRadius: '999px',
+                        background: c, color: 'white',
+                        boxShadow: `0 2px 6px ${c}55`,
+                        letterSpacing: '0.03em',
+                      }}>
+                        {label}
+                      </span>
+
+                      {/* Hospital name + distance */}
+                      <div className="flex items-center gap-2 mb-2">
+                        <span style={{ fontSize: '13px' }}>🏥</span>
+                        <div>
+                          <p style={{ fontWeight: 700, fontSize: '0.78rem', color: 'var(--text-main)', lineHeight: 1.2 }}>{h.name}</p>
+                          {h.distance !== undefined && (
+                            <p style={{ fontSize: '10px', color: 'var(--text-muted)' }}>{h.distance.toFixed(1)} km away</p>
+                          )}
+                        </div>
+                      </div>
+
+                      {/* Capacity bar */}
+                      <div style={{ height: '4px', borderRadius: '999px', background: 'var(--border)', marginBottom: '8px' }}>
+                        <div style={{ height: '4px', borderRadius: '999px', width: `${h.currentLoad}%`, backgroundColor: c, transition: 'width 0.5s' }} />
+                      </div>
+
+                      {/* Buttons */}
+                      <div style={{ display: 'flex', gap: '6px' }}>
+                        <button onClick={() => setMapTarget(h.location)}
+                          style={{
+                            flex: 1, padding: '4px 0', borderRadius: '8px', fontSize: '10px', fontWeight: 700,
+                            background: 'var(--background)', border: '1px solid var(--border)', color: 'var(--text-main)',
+                            cursor: 'pointer', display: 'flex', alignItems: 'center', justifyContent: 'center', gap: '3px',
+                          }}>
+                          <MapPin size={9} /> Map
+                        </button>
+                        <button onClick={toggleAlert} disabled={isActive}
+                          style={{
+                            flex: 1, padding: '4px 0', borderRadius: '8px', fontSize: '10px', fontWeight: 700,
+                            background: isActive ? 'var(--background)' : 'var(--danger)',
+                            color: isActive ? 'var(--text-muted)' : 'white',
+                            border: isActive ? '1px solid var(--border)' : 'none',
+                            opacity: isActive ? 0.5 : 1, cursor: isActive ? 'not-allowed' : 'pointer',
+                            display: 'flex', alignItems: 'center', justifyContent: 'center', gap: '3px',
+                          }}>
+                          <ChevronRight size={9} /> Select
+                        </button>
+                      </div>
+                    </div>
+                  );
+                })}
+              </div>
+            )}
           </div>
 
         </div>

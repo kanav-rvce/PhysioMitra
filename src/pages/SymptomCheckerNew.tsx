@@ -147,7 +147,7 @@ const SymptomChecker = () => {
       </div>
 
       {/* Main 3-column grid */}
-      <div className="grid grid-cols-1 lg:grid-cols-3 gap-5">
+      <div style={{ display: 'grid', gridTemplateColumns: 'repeat(3, 1fr)', gap: '1.25rem', alignItems: 'start' }}>
 
         {/* Column 1: General Symptoms */}
         <div className="flex flex-col gap-3">
@@ -216,52 +216,51 @@ const SymptomChecker = () => {
         {/* Column 3: Selected + Analysis */}
         <div className="flex flex-col gap-4">
 
-          {/* Selected chips */}
-          {selected.length > 0 && (
-            <div className="card border border-border shadow-sm" style={{ padding: '12px 14px' }}>
-              <div className="flex items-center justify-between mb-2">
-                <span className="text-xs font-semibold" style={{ color: 'var(--text-muted)' }}>
-                  SELECTED ({selected.length})
-                </span>
-                <button
-                  onClick={clearAll}
-                  className="text-xs"
-                  style={{ color: 'var(--primary)', textDecoration: 'underline', fontWeight: 600 }}
-                >
+          {/* Selected symptoms card — always shown */}
+          <div className="card border border-border shadow-sm" style={{ padding: '12px 14px' }}>
+            <div className="flex items-center justify-between mb-2">
+              <span className="text-xs font-semibold" style={{ color: 'var(--text-muted)' }}>
+                SELECTED SYMPTOMS {selected.length > 0 && `(${selected.length})`}
+              </span>
+              {selected.length > 0 && (
+                <button onClick={clearAll} className="text-xs" style={{ color: 'var(--primary)', textDecoration: 'underline', fontWeight: 600 }}>
                   Clear all
                 </button>
-              </div>
-              <div className="flex flex-wrap gap-1.5 mb-3">
-                {selectedSymptomLabels.map(s => (
-                  <span
-                    key={s.id}
-                    style={{
-                      display: 'inline-flex',
-                      alignItems: 'center',
-                      gap: '4px',
-                      background: s.isPhysioRelated ? 'rgba(16,185,129,0.12)' : 'rgba(99,102,241,0.12)',
-                      color: s.isPhysioRelated ? '#10b981' : 'var(--primary)',
-                      border: `1px solid ${s.isPhysioRelated ? 'rgba(16,185,129,0.3)' : 'rgba(99,102,241,0.3)'}`,
-                      borderRadius: '999px',
-                      fontSize: '0.72rem',
-                      fontWeight: 600,
-                      padding: '2px 8px',
-                    }}
-                  >
-                    {s.label}
-                    <button onClick={() => toggle(s.id)} style={{ lineHeight: 1, color: 'inherit', opacity: 0.7 }}>
-                      <X size={10} />
-                    </button>
-                  </span>
-                ))}
-              </div>
-              <div className="flex justify-end">
-                <button className="btn btn-primary shadow-md" onClick={analyze}>
-                  Analyze <ChevronRight size={15} />
-                </button>
-              </div>
+              )}
             </div>
-          )}
+            {selected.length === 0 ? (
+              <p className="text-xs" style={{ color: 'var(--text-muted)', fontStyle: 'italic' }}>
+                No symptoms selected yet.
+              </p>
+            ) : (
+              <>
+                <div className="flex flex-wrap gap-1.5 mb-3">
+                  {selectedSymptomLabels.map(s => (
+                    <span
+                      key={s.id}
+                      style={{
+                        display: 'inline-flex', alignItems: 'center', gap: '4px',
+                        background: s.isPhysioRelated ? 'rgba(16,185,129,0.12)' : 'rgba(99,102,241,0.12)',
+                        color: s.isPhysioRelated ? '#10b981' : 'var(--primary)',
+                        border: `1px solid ${s.isPhysioRelated ? 'rgba(16,185,129,0.3)' : 'rgba(99,102,241,0.3)'}`,
+                        borderRadius: '999px', fontSize: '0.72rem', fontWeight: 600, padding: '2px 8px',
+                      }}
+                    >
+                      {s.label}
+                      <button onClick={() => toggle(s.id)} style={{ lineHeight: 1, color: 'inherit', opacity: 0.7 }}>
+                        <X size={10} />
+                      </button>
+                    </span>
+                  ))}
+                </div>
+                <div className="flex justify-end">
+                  <button className="btn btn-primary shadow-md" onClick={analyze}>
+                    Analyze <ChevronRight size={15} />
+                  </button>
+                </div>
+              </>
+            )}
+          </div>
 
           {/* AI Analysis */}
           {analyzed && results.length > 0 ? (

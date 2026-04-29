@@ -207,55 +207,54 @@ const SymptomChecker = () => {
             </div>
           </div>
 
-          {/* Selected symptoms as removable chips + Analyze */}
-          {selected.length > 0 && (
-            <div className="card border border-border shadow-sm" style={{ padding: '14px 16px' }}>
-              <div className="flex items-center justify-between mb-3">
-                <span className="text-xs font-semibold" style={{ color: 'var(--text-muted)' }}>SELECTED SYMPTOMS</span>
-                <button onClick={clearAll} className="text-xs" style={{ color: 'var(--primary)', textDecoration: 'underline', fontWeight: 600, padding: '4px 8px', borderRadius: '4px', transition: 'all 0.2s ease' }} onMouseEnter={(e) => e.currentTarget.style.background = 'rgba(14, 165, 233, 0.1)'} onMouseLeave={(e) => e.currentTarget.style.background = 'transparent'}>
-                  Clear all
-                </button>
-              </div>
-              <div className="flex flex-wrap gap-2 mb-3">
-                {selectedSymptomLabels.map(s => (
-                  <span
-                    key={s.id}
-                    style={{
-                      display: 'inline-flex',
-                      alignItems: 'center',
-                      gap: '5px',
-                      background: s.isPhysioRelated ? 'rgba(16,185,129,0.12)' : 'rgba(99,102,241,0.12)',
-                      color: s.isPhysioRelated ? '#10b981' : 'var(--primary)',
-                      border: `1px solid ${s.isPhysioRelated ? 'rgba(16,185,129,0.3)' : 'rgba(99,102,241,0.3)'}`,
-                      borderRadius: '999px',
-                      fontSize: '0.78rem',
-                      fontWeight: 600,
-                      padding: '3px 10px 3px 10px',
-                      cursor: 'default',
-                    }}
-                  >
-                    {s.label}
-                    <button
-                      onClick={() => toggle(s.id)}
-                      style={{ lineHeight: 1, color: 'inherit', opacity: 0.7, marginLeft: '2px' }}
-                      title={`Remove ${s.label}`}
-                    >
-                      <X size={11} />
-                    </button>
-                  </span>
-                ))}
-              </div>
-              <div className="flex justify-end">
-                <button className="btn btn-primary shadow-md" onClick={analyze}>
-                  Analyze <ChevronRight size={16} />
-                </button>
-              </div>
-            </div>
-          )}
+          {/* Selected symptoms moved to right column */}
         </div>
 
         {/* Right: AI Analysis */}
         <div className="flex flex-col gap-4">
+
+          {/* Selected symptoms card — always visible above AI Analysis */}
+          <div className="card border border-border shadow-sm" style={{ padding: '14px 16px' }}>
+            <div className="flex items-center justify-between mb-3">
+              <span className="text-xs font-semibold" style={{ color: 'var(--text-muted)' }}>
+                SELECTED SYMPTOMS {selected.length > 0 && `(${selected.length})`}
+              </span>
+              {selected.length > 0 && (
+                <button onClick={clearAll} className="text-xs" style={{ color: 'var(--primary)', textDecoration: 'underline', fontWeight: 600, padding: '4px 8px', borderRadius: '4px' }}
+                  onMouseEnter={e => e.currentTarget.style.background = 'rgba(14,165,233,0.1)'}
+                  onMouseLeave={e => e.currentTarget.style.background = 'transparent'}>
+                  Clear all
+                </button>
+              )}
+            </div>
+            {selected.length === 0 ? (
+              <p className="text-xs" style={{ color: 'var(--text-muted)', fontStyle: 'italic' }}>No symptoms selected yet.</p>
+            ) : (
+              <>
+                <div className="flex flex-wrap gap-2 mb-3">
+                  {selectedSymptomLabels.map(s => (
+                    <span key={s.id} style={{
+                      display: 'inline-flex', alignItems: 'center', gap: '5px',
+                      background: s.isPhysioRelated ? 'rgba(16,185,129,0.12)' : 'rgba(99,102,241,0.12)',
+                      color: s.isPhysioRelated ? '#10b981' : 'var(--primary)',
+                      border: `1px solid ${s.isPhysioRelated ? 'rgba(16,185,129,0.3)' : 'rgba(99,102,241,0.3)'}`,
+                      borderRadius: '999px', fontSize: '0.78rem', fontWeight: 600, padding: '3px 10px', cursor: 'default',
+                    }}>
+                      {s.label}
+                      <button onClick={() => toggle(s.id)} style={{ lineHeight: 1, color: 'inherit', opacity: 0.7, marginLeft: '2px' }}>
+                        <X size={11} />
+                      </button>
+                    </span>
+                  ))}
+                </div>
+                <div className="flex justify-end">
+                  <button className="btn btn-primary shadow-md" onClick={analyze}>
+                    Analyze <ChevronRight size={16} />
+                  </button>
+                </div>
+              </>
+            )}
+          </div>
           {analyzed && results.length > 0 ? (
             <>
               {hasPhysioResult && (
